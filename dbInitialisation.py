@@ -46,6 +46,7 @@ def init_db():
                 id INTEGER PRIMARY KEY,
                 user_id INTEGER NOT NULL,
                 menu_id INTEGER NOT NULL,
+                amount_received INTEGER NOT NULL,
                 date TEXT NOT NULL DEFAULT CURRENT_DATE,
                 FOREIGN KEY(user_id) REFERENCES users(id),
                 FOREIGN KEY(menu_id) REFERENCES menu(id),
