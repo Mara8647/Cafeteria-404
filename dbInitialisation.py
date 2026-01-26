@@ -4,33 +4,34 @@ def init_db():
     #создание связи с БД (создается файл cafe в котором будут храниться данные)"
     connection = sqlite3.connect('cafe.db')
     #создаем указатель для отправки SQL запросы в БД и получения результатов"
-    сursor = connection.cursor()
-    #Таблица для юзеров
-    сursor.execute('''
-            CREATE TABLE IF NOT EXISTS users (
-                id INTEGER PRIMARY KEY,
-                username TEXT UNIQUE NOT NULL,
-                email TEXT UNIQUE NOT NULL,
-                password TEXT NOT NULL,
-                payment_type TEXT CHECK(payment_type IN ('single','subscription')),
-                user_balance REAL NOT NULL,
-                role TEXT NOT NULL CHECK(role IN ('student', 'cook', 'admin')),
-                allergies TEXT NOT NULL CHECK(allergies IN ('none', 'milk', 'eggs', 'peanuts', 'seafood', 'wheat', 'soy'))
-            )
-        ''')
+    cursor = connection.cursor()
+    # Создание таблицы пользователей с полем is_approved
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT UNIQUE NOT NULL,
+            email TEXT UNIQUE NOT NULL,
+            password TEXT NOT NULL,
+            payment_type TEXT NOT NULL,
+            user_balance REAL DEFAULT 0.0,
+            role TEXT NOT NULL DEFAULT 'user',
+            allergies TEXT DEFAULT 'НЕТ',
+            is_approved BOOLEAN DEFAULT FALSE -- Поле для подтверждения регистрации
+        )
+    ''')
     #Таблица для меню на каждый день
-    сursor.execute('''
+    cursor.execute('''
             CREATE TABLE IF NOT EXISTS menu (
                 id INTEGER PRIMARY KEY,
                 meal_type TEXT NOT NULL CHECK(meal_type IN ('breakfast', 'lunch')),
                 name TEXT NOT NULL,
                 price REAL NOT NULL,
-                allergies TEXT NOT NULL CHECK(allergies IN ('none', 'milk', 'eggs', 'peanuts', 'seafood', 'wheat', 'soy')),
+                allergies TEXT NOT NULL CHECK(allergies IN ('НЕТ', 'МОЛОКО', 'ЯЙЦА', 'ОРЕХИ', 'МОРЕПРОДУКТЫ', 'ПШЕНИЦА', 'СОЯ')),
                 date TEXT NOT NULL DEFAULT CURRENT_DATE
             )
         ''')
     #Таблица для оплат
-    сursor.execute('''
+    cursor.execute('''
             CREATE TABLE IF NOT EXISTS payments (
                 id INTEGER PRIMARY KEY,
                 user_id INTEGER NOT NULL,
@@ -41,7 +42,7 @@ def init_db():
             )
         ''')
     #Таблица для подсчета кому что выдано и в каком
-    сursor.execute('''
+    cursor.execute('''
             CREATE TABLE IF NOT EXISTS meals (
                 id INTEGER PRIMARY KEY,
                 user_id INTEGER NOT NULL,
@@ -54,7 +55,7 @@ def init_db():
             )
         ''')
     #Таблица для запросов на покупку
-    сursor.execute('''
+    cursor.execute('''
             CREATE TABLE IF NOT EXISTS purchase_requests (
                 id INTEGER PRIMARY KEY,
                 cook_id INTEGER NOT NULL,
@@ -65,6 +66,13 @@ def init_db():
                 FOREIGN KEY(cook_id) REFERENCES users(id)
             )
         ''')
+    
+    # Пример: создание администратора по умолчанию (только при первом запуске, раскомментируй при необходимости)
+    cursor.execute(
+        "INSERT OR IGNORE INTO users (username, email, password, payment_type, role, is_approved) VALUES (?, ?, ?, ?, ?, ?)",
+        ("admin", "admin@cafe.local", "secure_admin_password", "cash", "admin", True)
+    )
+
 
 
 
