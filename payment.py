@@ -1,43 +1,67 @@
 import sqlite3
 from datetime import date
 
-um = 'toki'
-current_date = date.today()
-
 # Переводит формат дат python в понятный для sqlite формат
 def adapt_date(val: date) -> str:
     return val.isoformat()
 
 sqlite3.register_adapter(date, adapt_date)
 
-# Функция отвечающая за оплату
-def pay(username, amount_of_meals):
-    with sqlite3.connect('cafe.db', detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES) as connection:
-        cursor = connection.cursor()
+current_date = date.today()
 
-        # Собираем id, способ оплаты и аллергию пользователя
-        cursor.execute("SELECT id, payment_type, user_balance, allergies FROM users WHERE username = ?", (username,))
-        user_data = cursor.fetchone()
-        
-        # Собираем информацию о сегодняшнем меню
-        cursor.execute("SELECT meal_type, name, price, allergies FROM menu WHERE date = ?", (current_date,))
-        menu_items = cursor.fetchall()
+# Оплата еды
+def pay(username, quantity):
+    with sqlite3.connect('cafe.db') as conn:
+        c = conn.cursor()
 
-        amount_to_pay = 0.0
-        # Проверяем еду на наличие аллергенов
-        for menu_item in menu_items:
-            if menu_item[3] != user_data[3]:
-                amount_to_pay += menu_item[2] * amount_of_meals
-            else:
-                print(f"{menu_item[0]} содержит аллергены.")
-            
-        # Проверяем баланс пользвателя
-        if amount_to_pay <= user_data[2]:
-            cursor.execute("UPDATE users SET user_balance = ? WHERE id = ?", (user_data[2] - amount_to_pay, user_data[0]))
-            cursor.execute("INSERT INTO payments (user_id, amount, payment_type, date) VALUES (?, ?, ?, ?)", (user_data[0], amount_to_pay, user_data[1], current_date))
-            print(f"Оплата прошла успешно. Ваш баланс: {user_data[2] - amount_to_pay}")
+        # Данные пользователя
+        c.execute("SELECT id, payment_type, user_balance, allergies FROM users WHERE username = ?", (username,))
+        user_data = c.fetchone()
+
+        if not user_data:
+            print("Такого пользователя нет.")
+            return False
+
+        user_id, payment_type, balance, user_allergy = user_data
+
+        # Меню на сегодня
+        c.execute("SELECT meal_type, name, price, allergies FROM menu WHERE date = ?", (current_date,))
+        menu = c.fetchall()
+
+        if not menu:
+            print("Сегодня столовая не работает (меню нет).")
+            return False
+
+        total_cost = 0.0
+
+        # Считаем сумму, пропуская то что нельзя есть
+        for item in menu:
+            meal_name = item[1]
+            price = item[2]
+            meal_allergy = item[3]
+
+            # Если в блюде содержатся опасные для пользователся аллергены - пропускаем
+            if meal_allergy != 'none' and meal_allergy == user_allergy:
+                print(f"Внимание! {meal_name} содержит {meal_allergy}. Оно не будет включено в итоговую стоимость.")
+                continue # Не считаем в чек
+
+            total_cost += price * quantity
+
+        if payment_type == 'subscription':
+            # Если абонемент - списываем 0, но фиксируем факт
+            c.execute("INSERT INTO payments (user_id, amount, payment_type, date) VALUES (?, 0, ?, ?)", 
+                    (user_id, payment_type, current_date))
+            print(f"Оплата по абонементу прошла успешно.")
+            return True
+
+        # Пробуем списать деньги (если не абонемент)
+        if total_cost <= balance:
+            new_balance = balance - total_cost
+            c.execute("UPDATE users SET user_balance = ? WHERE id = ?", (new_balance, user_id))
+            c.execute("INSERT INTO payments (user_id, amount, payment_type, date) VALUES (?, ?, ?, ?)", 
+                    (user_id, total_cost, payment_type, current_date))
+            print(f"Успешно оплачено: {total_cost}руб. Остаток: {new_balance}руб.")
+            return True
         else:
-            print("У вас недостаточно средств")
-
-
-pay(um, 3)
+            print(f"Не достаточно средств! Требуется {total_cost}; ваш баланс {balance}.")
+            return False
