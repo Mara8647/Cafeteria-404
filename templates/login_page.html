@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+
+{% block login %}
+
+
+<form action="{{ url_for('login_page') }}" method="POST" id="mainForm">
+        <div class="mb-3">
+            <label class="form-label">Имя пользователя</label>
+            <input type="text" class="form-control" name="username" placeholder="например: Иван Иванов" required>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Введите пароль</label>
+            <input type="password" class="form-control" name="password" placeholder="например: 123aBc_456" required>
+            <div class="form-text">Должен содержать: от 8 символов, заглавную и строчную буквы, цифру и спецсимвол</div>
+        </div>
+    <button type="submit" class="btn btn-primary" id="nextButton">Войти</button>
+</form>
+
+
+{% endblock %}

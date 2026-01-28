@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+
+{% block register %}
+
+<form action="{{ url_for('register_page') }}" method="POST" id="mainForm">
+    <!-- поле для хранения выбранной роли -->
+    <input type="hidden" name="selected_role" id="selectedRoleField">
+
+    <!-- Выбор роли -->
+    <div id="step1">
+        <div class="mb-3">
+            <label for="inputRole" class="form-label">Выберите роль</label>
+            <select class="form-select" id="inputRole" required>
+                <option value="" disabled selected>Выберите роль</option>
+                <option value="cook">Повар</option>
+                <option value="student">Ученик</option>
+                <option value="admin">Админ</option>
+            </select>
+        </div>
+        <button type="button" class="btn btn-primary" id="nextButton">Далее</button>
+    </div>
+
+    <!-- форма после выбора роли -->
+    <div id="commonFields" style="display: none;">
+        <h4 id="formTitle">Регистрация</h4>
+
+        <div class="mb-3">
+            <label class="form-label">Введите ФИО</label>
+            <input type="text" class="form-control" name="name" placeholder="Иван Иванович Иванов" required>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Адрес электронной почты</label>
+            <input type="email" class="form-control" name="email" placeholder="например: example@gmail.com" required>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Введите пароль</label>
+            <input type="password" pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$" class="form-control" name="password" placeholder="например: 123aBc_456" required>
+            <div class="form-text">Должен содержать: от 8 символов, заглавную и строчную буквы, цифру и спецсимвол</div>
+        </div>
+
+        <!-- Поле для аллергенов (только для ученика) -->
+        <div class="mb-3" id="allergensField" style="display: none;">
+            <label class="form-label">Аллергены</label>
+            <textarea class="form-control" name="allergens" rows="2" placeholder="Перечислите аллергены через запятую"></textarea>
+            <div class="form-text">Укажите продукты или вещества, на которые у вас аллергия (необязательно)</div>
+        </div>
+
+        <button type="button" class="btn btn-secondary" id="backButton">Назад</button>
+        <button type="submit" class="btn btn-success">Зарегистрироваться</button>
+    </div>
+</form>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const roleSelect = document.getElementById('inputRole');
+    const nextButton = document.getElementById('nextButton');
+    const backButton = document.getElementById('backButton');
+    const step1Div = document.getElementById('step1');
+    const commonFieldsDiv = document.getElementById('commonFields');
+    const allergensField = document.getElementById('allergensField');
+    const formTitle = document.getElementById('formTitle');
+    const selectedRoleField = document.getElementById('selectedRoleField');
+
+    nextButton.addEventListener('click', function() {
+        const selectedRole = roleSelect.value;
+
+        if (!selectedRole) {
+            alert('Пожалуйста, выберите роль');
+            return;
+        }
+
+        // Сохраняем роль в скрытом поле
+        selectedRoleField.value = selectedRole;
+
+        // Обновляем заголовок
+        formTitle.textContent = 'Регистрация ' +
+            (selectedRole === 'повар' ? 'повара' :
+             selectedRole === 'ученик' ? 'ученика' : 'администратора');
+
+        // Показываем/скрываем поле аллергенов
+        if (selectedRole === 'ученик') {
+            allergensField.style.display = 'block';
+        } else {
+            allergensField.style.display = 'none';
+        }
+
+        // Переключаем видимость
+        step1Div.style.display = 'none';
+        commonFieldsDiv.style.display = 'block';
+    });
+
+    backButton.addEventListener('click', function() {
+        step1Div.style.display = 'block';
+        commonFieldsDiv.style.display = 'none';
+        selectedRoleField.value = '';
+    });
+});
+</script>
+
+{% endblock %}

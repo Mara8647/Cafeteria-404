@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Личный кабинет</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* CSS стили */
+        :root {
+            --primary-color: #4e73df;
+            --secondary-color: #858796;
+            --success-color: #1cc88a;
+            --info-color: #36b9cc;
+            --warning-color: #f6c23e;
+            --danger-color: #e74a3b;
+        }
+
+        body {
+            background-color: #f8f9fc;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .sidebar {
+            min-height: 100vh;
+            background: linear-gradient(180deg, var(--primary-color) 0%, #224abe 100%);
+            color: white;
+            position: fixed;
+            width: 250px;
+            transition: all 0.3s;
+            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+            z-index: 1000;
+        }
+
+        .sidebar .user-info {
+            padding: 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
+        }
+
+        .sidebar .user-info .avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background-color: white;
+            color: var(--primary-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+            font-size: 2rem;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .sidebar .nav {
+            padding: 1rem 0;
+        }
+
+        .sidebar .nav-link {
+            color: rgba(255, 255, 255, 0.8);
+            padding: 0.75rem 1.5rem;
+            margin: 0.2rem 0;
+            border-left: 3px solid transparent;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+        }
+
+        .sidebar .nav-link:hover, .sidebar .nav-link.active {
+            color: white;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-left-color: white;
+            text-decoration: none;
+        }
+
+        .sidebar .nav-link i {
+            width: 20px;
+            margin-right: 10px;
+            text-align: center;
+        }
+
+        .main-content {
+            margin-left: 250px;
+            padding: 20px;
+            min-height: 100vh;
+            transition: all 0.3s;
+        }
+
+        .content-card {
+            background-color: white;
+            border-radius: 0.35rem;
+            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+            margin-bottom: 1.5rem;
+            padding: 1.5rem;
+        }
+
+        .page-title {
+            color: #5a5c69;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            font-size: 1.75rem;
+        }
+
+        .menu-toggle {
+            display: none;
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            z-index: 1100;
+        }
+
+        .dish-card {
+            border: 1px solid #e3e6f0;
+            border-radius: 0.35rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            transition: all 0.3s;
+        }
+
+        .dish-card:hover {
+            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .dish-card .dish-title {
+            color: var(--primary-color);
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .dish-card .dish-desc {
+            color: #858796;
+            font-size: 0.9rem;
+        }
+
+        .dish-card .dish-price {
+            color: var(--success-color);
+            font-weight: 700;
+            margin-top: 0.5rem;
+        }
+
+        .allergy-item {
+            background-color: #f8f9fc;
+            border: 1px solid #e3e6f0;
+            border-radius: 0.35rem;
+            padding: 0.75rem 1rem;
+            margin-bottom: 0.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #e3e6f0;
+        }
+
+        .cart-item:last-child {
+            border-bottom: none;
+        }
+
+        .quantity-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 5px;
+        }
+
+        .quantity-btn {
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+        }
+
+        .support-form .form-control {
+            margin-bottom: 1rem;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+        .btn-primary:hover {
+            background-color: #2e59d9;
+            border-color: #2653d4;
+        }
+
+        /* Адаптивность */
+        @media (max-width: 768px) {
+            .sidebar {
+                margin-left: -250px;
+            }
+
+            .sidebar.show {
+                margin-left: 0;
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+
+            .menu-toggle {
+                display: block;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Кнопка меню для мобильных устройств -->
+    <button class="btn btn-primary menu-toggle" id="menuToggle">
+        <i class="fas fa-bars"></i>
+    </button>
+
+    <!-- Боковое меню -->
+    <div class="sidebar" id="sidebar">
+        <div class="user-info">
+            <div class="avatar">
+                <i class="fas fa-user-graduate"></i>
+            </div>
+            <h5 class="mb-1">{{username}}</h5>
+            <p class="mb-0 text-light">ученик</p>
+        </div>
+
+        <nav class="nav flex-column">
+            <a class="nav-link active" href="#" data-content="breakfast">
+                <i class="fas fa-coffee"></i>
+                <span>Завтрак</span>
+            </a>
+            <a class="nav-link" href="#" data-content="lunch">
+                <i class="fas fa-utensils"></i>
+                <span>Обед</span>
+            </a>
+            <a class="nav-link" href="#" data-content="allergies">
+                <i class="fas fa-allergies"></i>
+                <span>Аллергии</span>
+            </a>
+            <a class="nav-link" href="#" data-content="cart">
+                <i class="fas fa-shopping-cart"></i>
+                <span>Корзина</span>
+                <span class="badge bg-danger ms-auto" id="cartCounter">3</span>
+            </a>
+            <a class="nav-link" href="#" data-content="support">
+                <i class="fas fa-headset"></i>
+                <span>Техподдержка</span>
+            </a>
+        </nav>
+    </div>
+
+    <!-- Основной контент -->
+    <div class="main-content" id="mainContent">
+        <div id="contentContainer">
+            <!-- Завтрак -->
+            <div class="content-section" id="breakfast">
+                <h2 class="page-title">Завтрак</h2>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="dish-card" data-id="1" data-name="Каша овсяная с фруктами" data-price="120" data-category="breakfast">
+                            <h5 class="dish-title">Каша овсяная с фруктами</h5>
+                            <p class="dish-desc">Овсяные хлопья с молоком, яблоком и изюмом</p>
+                            <div class="dish-price">120 ₽</div>
+                            <button class="btn btn-sm btn-primary mt-2 add-to-cart">Добавить в корзину</button>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="dish-card" data-id="2" data-name="Омлет с овощами" data-price="150" data-category="breakfast">
+                            <h5 class="dish-title">Омлет с овочами</h5>
+                            <p class="dish-desc">Яичный омлет с помидорами, болгарским перцем и зеленью</p>
+                            <div class="dish-price">150 ₽</div>
+                            <button class="btn btn-sm btn-primary mt-2 add-to-cart">Добавить в корзину</button>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="dish-card" data-id="3" data-name="Творожная запеканка" data-price="130" data-category="breakfast">
+                            <h5 class="dish-title">Творожная запеканка</h5>
+                            <p class="dish-desc">Нежная запеканка из творога с изюмом и ванилью</p>
+                            <div class="dish-price">130 ₽</div>
+                            <button class="btn btn-sm btn-primary mt-2 add-to-cart">Добавить в корзину</button>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="dish-card" data-id="4" data-name="Блины с вареньем" data-price="140" data-category="breakfast">
+                            <h5 class="dish-title">Блины с вареньем</h5>
+                            <p class="dish-desc">Домашние блины с клубничным вареньем</p>
+                            <div class="dish-price">140 ₽</div>
+                            <button class="btn btn-sm btn-primary mt-2 add-to-cart">Добавить в корзину</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Обед -->
+            <div class="content-section" id="lunch" style="display: none;">
+                <h2 class="page-title">Обед</h2>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="dish-card" data-id="5" data-name="Пюре с котлетой" data-price="200" data-category="lunch">
+                            <h5 class="dish-title">Пюре с котлетой</h5>
+                            <p class="dish-desc">Картофельное пюре с куриной котлетой и овощным салатом</p>
+                            <div class="dish-price">200 ₽</div>
+                            <button class="btn btn-sm btn-primary mt-2 add-to-cart">Добавить в корзину</button>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="dish-card" data-id="6" data-name="Суп куриный с лапшой" data-price="180" data-category="lunch">
+                            <h5 class="dish-title">Суп куриный с лапшой</h5>
+                            <p class="dish-desc">Наваристый куриный суп с домашней лапшой</p>
+                            <div class="dish-price">180 ₽</div>
+                            <button class="btn btn-sm btn-primary mt-2 add-to-cart">Добавить в корзину</button>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="dish-card" data-id="7" data-name="Гречка с гуляшом" data-price="220" data-category="lunch">
+                            <h5 class="dish-title">Гречка с гуляшом</h5>
+                            <p class="dish-desc">Гречневая каша с говяжьим гуляшом и морковью</p>
+                            <div class="dish-price">220 ₽</div>
+                            <button class="btn btn-sm btn-primary mt-2 add-to-cart">Добавить в корзину</button>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="dish-card" data-id="8" data-name="Рыба запеченная с овощами" data-price="240" data-category="lunch">
+                            <h5 class="dish-title">Рыба запеченная с овощами</h5>
+                            <p class="dish-desc">Филе трески с картофелем и морковью под сырной корочкой</p>
+                            <div class="dish-price">240 ₽</div>
+                            <button class="btn btn-sm btn-primary mt-2 add-to-cart">Добавить в корзину</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Аллергии -->
+            <div class="content-section" id="allergies" style="display: none;">
+                <h2 class="page-title">Мои аллергии</h2>
+                <div class="content-card">
+                    <p class="mb-3">Здесь вы можете управлять списком продуктов, на которые у вас аллергия:</p>
+
+                    <div id="allergiesList">
+                        <div class="allergy-item">
+                            <span><i class="fas fa-pepper-hot text-danger me-2"></i>Острые продукты</span>
+                            <button class="btn btn-sm btn-outline-danger">Удалить</button>
+                        </div>
+                        <div class="allergy-item">
+                            <span><i class="fas fa-seedling text-success me-2"></i>Орехи</span>
+                            <button class="btn btn-sm btn-outline-danger">Удалить</button>
+                        </div>
+                        <div class="allergy-item">
+                            <span><i class="fas fa-egg text-warning me-2"></i>Яйца</span>
+                            <button class="btn btn-sm btn-outline-danger">Удалить</button>
+                        </div>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <h5>Добавить новую аллергию</h5>
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="input-group mb-3">
+                                <input type="text" class="form-control" id="newAllergy" placeholder="Например: молочные продукты">
+                                <button class="btn btn-primary" id="addAllergyBtn">Добавить</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-info mt-3">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Система автоматически исключит блюда с указанными продуктами из рекомендаций.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Корзина -->
+            <div class="content-section" id="cart" style="display: none;">
+                <h2 class="page-title">Моя корзина</h2>
+                <div class="content-card">
+                    <div id="cartItems">
+                    </div>
+
+                    <hr class="my-4">
+
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="mb-0">Итого:</h5>
+                            <p class="text-muted mb-0" id="itemCount">0 товаров на сумму</p>
+                        </div>
+                        <div class="h4 text-primary mb-0" id="cartTotal">0 ₽</div>
+                    </div>
+
+                    <div class="d-grid gap-2 mt-4">
+                        <button class="btn btn-primary btn-lg" id="checkoutBtn">Оформить заказ</button>
+                        <button class="btn btn-outline-secondary" id="clearCartBtn">Очистить корзину</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Техподдержка -->
+            <div class="content-section" id="support" style="display: none;">
+                <h2 class="page-title">Техническая поддержка</h2>
+                <div class="content-card">
+                    <p>Если у вас возникли проблемы с работой системы, пожалуйста, опишите их ниже:</p>
+
+                    <div class="support-form">
+                        <div class="mb-3">
+                            <label for="supportTopic" class="form-label">Тема обращения</label>
+                            <select class="form-control" id="supportTopic">
+                                <option value="">Выберите тему</option>
+                                <option value="technical">Техническая проблема</option>
+                                <option value="menu">Вопрос по меню</option>
+                                <option value="allergy">Проблема с аллергиями</option>
+                                <option value="payment">Оплата и заказы</option>
+                                <option value="other">Другое</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="supportMessage" class="form-label">Сообщение</label>
+                            <textarea class="form-control" id="supportMessage" rows="5" placeholder="Опишите вашу проблему подробно..."></textarea>
+                        </div>
+
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            Время ответа технической поддержки: до 24 часов в рабочие дни.
+                        </div>
+
+                        <button class="btn btn-primary">Отправить обращение</button>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <h5>Контакты поддержки</h5>
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center mb-3">
+                                <i class="fas fa-phone text-primary me-3 fa-lg"></i>
+                                <div>
+                                    <div class="fw-bold">Телефон</div>
+                                    <div>+7 (123) 456-78-99</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center mb-3">
+                                <i class="fas fa-envelope text-primary me-3 fa-lg"></i>
+                                <div>
+                                    <div class="fw-bold">Email</div>
+                                    <div>support@school-dining.ru</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS с Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
