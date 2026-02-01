@@ -1,0 +1,9 @@
+services:
+  cafeteria:
+    image: cafeteria-404:latest
+    container_name: cafeteria
+    restart: always
+    volumes:
+      - ./cafe.db:/usr/local/app/cafe.db
+    ports:
+      - 80:5000
