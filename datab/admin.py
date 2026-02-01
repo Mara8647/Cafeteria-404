@@ -20,7 +20,7 @@ def view_statistics():
         res = c.fetchone()
         income = res[0] if res[0] else 0.0
         print(f"Касса сегодня: {income} руб.")
-
+# Просто комментарий
         # Считаем порции
         c.execute("SELECT COUNT(*) FROM meals WHERE date = ?", (current_date,))
         res = c.fetchone()
