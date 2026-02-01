@@ -1,9 +1,9 @@
 services:
   cafeteria:
-    image: cafeteria-404:latest
+    image: cafeteria-404:latest # Так же вместо latest можно использовать alpine, который подходит для случаев когда мало места или слабые характеристики
     container_name: cafeteria
     restart: always
     volumes:
-      - ./cafe.db:/usr/local/app/cafe.db
+      - ./cafe.db:/app/cafe.db
     ports:
       - 80:5000

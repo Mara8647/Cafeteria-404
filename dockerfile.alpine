@@ -1,4 +1,4 @@
-FROM python:3.13
+FROM alpine:latest
 
 RUN mkdir /app
 WORKDIR /app
@@ -9,7 +9,8 @@ COPY templates/* ./templates/
 COPY app.py ./
 
 # Устанавливаем все необходимые зависимости
-RUN pip install --no-cache-dir flask
+RUN apk add python3 py3-pip
+RUN pip install --break-system-packages flask
 
 # Открываем нужный порт
 EXPOSE 5000
