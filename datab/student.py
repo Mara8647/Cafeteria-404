@@ -10,11 +10,14 @@ sqlite3.register_adapter(date, adapt_date)
 
 current_date = date.today()
 
-def view_menu():
+def view_menu(student_allergie):
     print(f"\n--- Меню на {current_date} ---")
     with sqlite3.connect('cafe.db') as conn:
         c = conn.cursor()
-        c.execute("SELECT meal_type, name, price, allergies FROM menu WHERE date = ?", (current_date,))
+        if student_allergie != "НЕТ":
+            c.execute("SELECT meal_type, name, price, allergies FROM menu WHERE date = ? AND allergies != ?", (current_date, student_allergie))
+        else:
+            c.execute("SELECT meal_type, name, price, allergies FROM menu WHERE date = ?", (current_date,))
         items = c.fetchall()
 
         if not items:

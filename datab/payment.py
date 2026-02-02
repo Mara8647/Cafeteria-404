@@ -25,7 +25,10 @@ def pay(username, quantity):
         user_id, payment_type, balance, user_allergy = user_data
 
         # Меню на сегодня
-        c.execute("SELECT meal_type, name, price, allergies FROM menu WHERE date = ?", (current_date,))
+        if user_allergy != "НЕТ":
+            c.execute("SELECT meal_type, name, price, allergies FROM menu WHERE date = ? AND allergies != ?", (current_date, user_allergy))
+        else:
+            c.execute("SELECT meal_type, name, price, allergies FROM menu WHERE date = ?", (current_date,))
         menu = c.fetchall()
 
         if not menu:
@@ -36,14 +39,7 @@ def pay(username, quantity):
 
         # Считаем сумму, пропуская то что нельзя есть
         for item in menu:
-            meal_name = item[1]
             price = item[2]
-            meal_allergy = item[3]
-
-            # Если в блюде содержатся опасные для пользователся аллергены - пропускаем
-            if meal_allergy != 'none' and meal_allergy == user_allergy:
-                print(f"Внимание! {meal_name} содержит {meal_allergy}. Оно не будет включено в итоговую стоимость.")
-                continue # Не считаем в чек
 
             total_cost += price * quantity
 

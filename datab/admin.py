@@ -39,7 +39,7 @@ def display_purchase_requests():
             for r in reqs:
                 print(f"#{r[0]} | {r[1]} ({r[2]}) | от {r[4]}")
 
-def manage_request(request_id, action):
+def manage_request(request_ids : list, action):
     # action: 'approve' (добро) или 'reject' (отказ)
     if action not in ('approve', 'reject'):
         print("Ошибка. Выбрано некорректное действие (принимается 'approve' или 'reject').")
@@ -50,33 +50,34 @@ def manage_request(request_id, action):
     with sqlite3.connect('cafe.db') as conn:
         c = conn.cursor()
 
-        # Ищем заявку
-        c.execute("SELECT product_name, quantity FROM purchase_requests WHERE id = ?", (request_id,))
-        requests = c.fetchone()
+        for request_id in request_ids:
+            # Ищем заявку
+            c.execute("SELECT product_name, quantity FROM purchase_requests WHERE id = ? AND status = 'pending'", (request_id,))
+            request = c.fetchone()
 
-        if not requests:
-            print("Такой заявки не существует.")
-            return
+            if not request:
+                print("Такой заявки не существует.")
+                return
 
-        # Меняем статус
-        c.execute("UPDATE purchase_requests SET status = ? WHERE id = ?", (status, request_id))
-        print(f"Заявка #{request_id} -> {status}")
+            # Меняем статус
+            c.execute("UPDATE purchase_requests SET status = ? WHERE id = ?", (status, request_id))
+            print(f"Заявка #{request_id} -> {status}")
 
-        # Если одобрили - добавляем на склад
-        if status == 'approved':
-            product, quantity = requests
+            # Если одобрили - добавляем на склад
+            if status == 'approved':
+                product, quantity = request
 
-            # Проверяем был ли уже такой товар
-            c.execute("SELECT quantity FROM inventory WHERE product_name = ?", (product,))
-            inventory = c.fetchone()
+                # Проверяем был ли уже такой товар
+                c.execute("SELECT quantity FROM inventory WHERE product_name = ?", (product,))
+                inventory = c.fetchone()
 
-            if inventory:
-                new_quantity = inventory[0] + quantity
-                c.execute("UPDATE inventory SET quantity = ? WHERE product_name = ?", (new_quantity, product))
-            else:
-                c.execute("INSERT INTO inventory (product_name, quantity) VALUES (?, ?)", (product, quantity))
+                if inventory:
+                    new_quantity = inventory[0] + quantity
+                    c.execute("UPDATE inventory SET quantity = ? WHERE product_name = ?", (new_quantity, product))
+                else:
+                    c.execute("INSERT INTO inventory (product_name, quantity) VALUES (?, ?)", (product, quantity))
 
-            print(f"На склад добавлено: {product} (+{quantity})")
+                print(f"На склад добавлено: {product} (+{quantity})")
 
 def generate_report():
     print("\n-------------------------")
