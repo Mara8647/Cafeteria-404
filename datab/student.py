@@ -55,62 +55,69 @@ def leave_review(username, meal_name, rating, comment):
         except Exception as e:
             print(f"Не удалось оставить отзыв: {e}")
 
-def receive_meal(username):
+def receive_meal(username, quantity):
     # Отмечаем, что забрали еду
     with sqlite3.connect('cafe.db') as conn:
         c = conn.cursor()
-        # Ищем id пользователя
+        
+        # 1. Ищем студента
         c.execute("SELECT id FROM users WHERE username = ?", (username,))
         user_res = c.fetchone()
-        if not user_res: return
+        if not user_res: 
+            print("Студент не найден.")
+            return
         user_id = user_res[0]
 
-        # Ищем меню на сегодня
-        c.execute("SELECT id, name FROM menu WHERE date = ?", (current_date,))
-        menu_items = c.fetchall()
-
-        if not menu_items:
-            print("На сегодня меню отсутствует.")
-            return
-
-        # Проверяем, оплачено ли питание сегодня
+        # 2. Проверяем оплату
         c.execute("SELECT id FROM payments WHERE user_id = ? AND date = ?", (user_id, current_date))
         if not c.fetchone():
             print("Сначала нужно оплатить (или иметь абонемент)!")
             return
 
-        # Отмечаем выдачу каждого блюда из меню
-        for item in menu_items:
-            menu_id = item[0]
+        # 3. Получаем корзину (список блюд)
+        # Соответствует запросу пользователя: [id, type, name, price, allergy]
+        c.execute("SELECT id, name FROM menu WHERE date = ?", (current_date,))
+        basket = c.fetchall()
+        
+        if not basket:
+            print("В меню сегодня пусто.")
+            return
+        
+        print(f"\n--- Выдача еды для {username} ---")
+        
+        # 4. Проходим по каждому блюду из списка
+        for item in basket:
+            # Разбираем список как просил пользователь:
+            menu_id = item[0]       # ID для БД
+            # Название блюда
             dish_name = item[1]
 
-            # Проверяем наличие на складе
+            # Проверяем наличие продукта на складе
             c.execute("SELECT quantity FROM inventory WHERE product_name = ?", (dish_name,))
-            inventory_res = c.fetchone()
-
-            if not inventory_res or inventory_res[0] < 1:
-                print(f"ОШИБКА: Недостаточно продуктов для {dish_name}!")
+            inv_res = c.fetchone()
+            
+            if not inv_res or inv_res[0] < 1:
+                print(f"ОШИБКА: {dish_name} закончился на складе!")
                 continue
-
             try:
+                # ВЫПОЛНЯЕМ ТРЕБУЕМЫЙ БЛОК КОДА ДЛЯ КАЖДОГО БЛЮДА:
+                
                 # Списываем продукт
-                c.execute("UPDATE inventory SET quantity = quantity - 1 WHERE product_name = ?", (dish_name,))
+                c.execute("UPDATE inventory SET quantity = quantity - ? WHERE product_name = ?", (dish_name, quantity))
                 
                 # Выдаем блюдо
-                c.execute("INSERT INTO meals (user_id, menu_id, amount_received, date) VALUES (?, ?, 1, ?)", 
-                        (user_id, menu_id, current_date))
-                conn.commit() # Важно закоммитить списание
-                print(f"Выдано блюдо: {dish_name}")
+                c.execute("INSERT INTO meals (user_id, menu_id, amount_received, date) VALUES (?, ?, ?, ?)", 
+                        (user_id, menu_id, quantity, current_date))
+                
+                print(f"Выдано: {dish_name}")
+                
             except sqlite3.IntegrityError:
-                print(f"Блюдо {dish_name} уже получено сегодня.")
-                # Если не удалось выдать (уже ел), надо вернуть продукт? 
-                # Пока считаем упрощенно: если IntegrityError, то транзакция откатится сама частично или мы просто не спишем. 
-                # Но так как мы сделали UPDATE до INSERT, надо быть аккуратнее.
-                # Лучше сначала проверить Eaten, потом UPDATE, потом INSERT.
-                # Но у нас UNIQUE constraint.
-                # Откатим списание вручную для простоты, если ошибка вставки
-                c.execute("UPDATE inventory SET quantity = quantity + 1 WHERE product_name = ?", (dish_name,))
+                print(f"Блюдо '{dish_name}' вы уже получили сегодня.")
+                # Если списание прошло, а выдача упала (уже ел) - возвращаем продукт
+                c.execute("UPDATE inventory SET quantity = quantity + ? WHERE product_name = ?", (dish_name, quantity))
                 conn.commit()
 
 if __name__ == "__main__":
     pass
+
+receive_meal('bomboclat julian linuxovich', 4)

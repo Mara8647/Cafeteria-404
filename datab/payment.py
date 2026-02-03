@@ -25,7 +25,7 @@ def pay(username, quantity):
         user_id, payment_type, balance, user_allergy = user_data
 
         # Меню на сегодня
-        if user_allergy != "НЕТ":
+        if user_allergy != "none":
             c.execute("SELECT meal_type, name, price, allergies FROM menu WHERE date = ? AND allergies != ?", (current_date, user_allergy))
         else:
             c.execute("SELECT meal_type, name, price, allergies FROM menu WHERE date = ?", (current_date,))
@@ -61,3 +61,5 @@ def pay(username, quantity):
         else:
             print(f"Не достаточно средств! Требуется {total_cost}; ваш баланс {balance}.")
             return False
+        
+pay('bomboclat julian linuxovich', 4)
