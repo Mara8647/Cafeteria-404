@@ -51,7 +51,7 @@
 
 1. Создание образа:
     ```bash
-    docker build -t cafeteria-404 .
+    docker build -f [название dockerfile] -t cafeteria-404:alpine/latest .
     ```
 2. Запуск контейнера при помощи compose.yml
     ```bash
