@@ -14,7 +14,7 @@ def view_menu(student_allergie):
     print(f"\n--- Меню на {current_date} ---")
     with sqlite3.connect('cafe.db') as conn:
         c = conn.cursor()
-        if student_allergie != "НЕТ":
+        if student_allergie != "none":
             c.execute("SELECT meal_type, name, price, allergies FROM menu WHERE date = ? AND allergies != ?", (current_date, student_allergie))
         else:
             c.execute("SELECT meal_type, name, price, allergies FROM menu WHERE date = ?", (current_date,))
@@ -87,7 +87,7 @@ def receive_meal(username):
             # Проверяем наличие на складе
             c.execute("SELECT quantity FROM inventory WHERE product_name = ?", (dish_name,))
             inventory_res = c.fetchone()
-            
+
             if not inventory_res or inventory_res[0] < 1:
                 print(f"ОШИБКА: Недостаточно продуктов для {dish_name}!")
                 continue
