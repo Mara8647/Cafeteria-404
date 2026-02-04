@@ -15,7 +15,7 @@ def init_db():
             payment_type TEXT CHECK(payment_type IN ('single','subscription')),
             user_balance REAL NOT NULL,
             role TEXT NOT NULL CHECK(role IN ('student', 'cook', 'admin')),
-            allergies TEXT NOT NULL CHECK('peanut', 'milk', 'eggs', 'wheat', 'nuts', 'fish', 'soy', 'crustaceans', 'none')
+            allergies TEXT CHECK(allergies IN ('peanut', 'milk', 'eggs', 'wheat', 'nuts', 'fish', 'soy', 'crustaceans', 'none'))
         )
     ''')
 
