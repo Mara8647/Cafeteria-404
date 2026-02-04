@@ -3,52 +3,39 @@
 {% block register %}
 
 <form action="{{ url_for('register_page') }}" method="POST" id="mainForm">
-    <!-- поле для хранения выбранной роли -->
-    <input type="hidden" name="selected_role" id="selectedRoleField">
 
-    <!-- Выбор роли -->
+    <!-- Скрытое поле для роли -->
+    <input type="hidden" name="role" id="selectedRoleField" >
+
+    <!-- Шаг 1: выбор роли -->
     <div id="step1">
-        <div class="mb-3">
-            <label for="inputRole" class="form-label">Выберите роль</label>
-            <select class="form-select" id="inputRole" required>
-                <option value="" disabled selected>Выберите роль</option>
-                <option value="cook">Повар</option>
-                <option value="student">Ученик</option>
-                <option value="admin">Админ</option>
-            </select>
-        </div>
-        <button type="button" class="btn btn-primary" id="nextButton">Далее</button>
+        <select class="form-select" id="inputRole" required>
+            <option value="">Выберите роль</option>
+            <option value="student">Ученик</option>
+            <option value="cook">Повар</option>
+            <option value="admin">Администратор</option>
+        </select>
+        <button type="button" id="nextButton" class="btn btn-primary mt-2">Далее</button>
     </div>
 
-    <!-- форма после выбора роли -->
+    <!-- Шаг 2: общие поля + аллергены -->
     <div id="commonFields" style="display: none;">
-        <h4 id="formTitle">Регистрация</h4>
+        <h3 id="formTitle">Регистрация</h3>
 
-        <div class="mb-3">
-            <label class="form-label">Введите ФИО</label>
-            <input type="text" class="form-control" name="name" placeholder="Иван Иванович Иванов" required>
+        <!-- Общие поля (имя, email и т.д.) -->
+        <input type="text" name="name" placeholder="Например: Иван Иванович" class="form-control mb-2" required>
+        <input type="email" name="email" placeholder="Например: example@gmail.com" class="form-control mb-2" required>
+        <input type="password" name="password" placeholder="Например: 123_Abc456" class="form-control mb-2" required>
+
+        <!-- Поле аллергенов (показывается только для student) -->
+        <div id="allergensField" style="display: none;" class="mb-3">
+            <label class="form-label">Аллергии</label>
+            <div id="allergyCheckboxes" class="d-flex flex-wrap gap-2 p-2 border rounded"></div>
+            <input type="hidden" name="allergens" id="allergensInput">
         </div>
 
-        <div class="mb-3">
-            <label class="form-label">Адрес электронной почты</label>
-            <input type="email" class="form-control" name="email" placeholder="например: example@gmail.com" required>
-        </div>
-
-        <div class="mb-3">
-            <label class="form-label">Введите пароль</label>
-            <input type="password" pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$" class="form-control" name="password" placeholder="например: 123aBc_456" required>
-            <div class="form-text">Должен содержать: от 8 символов, заглавную и строчную буквы, цифру и спецсимвол</div>
-        </div>
-
-        <!-- Поле для аллергенов (только для ученика) -->
-        <div class="mb-3" id="allergensField" style="display: none;">
-            <label class="form-label">Аллергены</label>
-            <textarea class="form-control" name="allergens" rows="2" placeholder="Перечислите аллергены через запятую"></textarea>
-            <div class="form-text">Укажите продукты или вещества, на которые у вас аллергия (необязательно)</div>
-        </div>
-
-        <button type="button" class="btn btn-secondary" id="backButton">Назад</button>
         <button type="submit" class="btn btn-success">Зарегистрироваться</button>
+        <button type="button" id="backButton" class="btn btn-secondary ms-2">Назад</button>
     </div>
 </form>
 
@@ -62,6 +49,50 @@ document.addEventListener('DOMContentLoaded', function() {
     const allergensField = document.getElementById('allergensField');
     const formTitle = document.getElementById('formTitle');
     const selectedRoleField = document.getElementById('selectedRoleField');
+    const allergensContainer = document.getElementById('allergyCheckboxes');
+    const allergensInput = document.getElementById('allergensInput'); // скрытое поле для отправки
+
+    // Список аллергенов
+    const allergensList = [
+        { value: 'eggs', label: 'Яйца' },
+        { value: 'milk', label: 'Молоко' },
+        { value: 'nuts', label: 'Орехи' },
+        { value: 'fish', label: 'Рыба' },
+        { value: 'soy', label: 'Соя' },
+        { value: 'crustaceans', label: 'Ракообразные' },
+        { value: 'wheat', label: 'Пшеница' },
+        { value: 'peanut', label: 'Арахис' }
+    ];
+
+    // Функция для инициализации кнопок аллергенов (вызывается один раз)
+    function initAllergenButtons() {
+        if (allergensContainer.children.length > 0) return; // уже инициализировано
+
+        const selected = new Set();
+
+        allergensList.forEach(item => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'btn btn-outline-secondary btn-sm';
+            btn.textContent = item.label;
+            btn.dataset.value = item.value;
+
+            btn.addEventListener('click', () => {
+                if (selected.has(item.value)) {
+                    selected.delete(item.value);
+                    btn.classList.remove('btn-primary');
+                    btn.classList.add('btn-outline-secondary');
+                } else {
+                    selected.add(item.value);
+                    btn.classList.remove('btn-outline-secondary');
+                    btn.classList.add('btn-primary');
+                }
+                allergensInput.value = Array.from(selected).join(',');
+            });
+
+            allergensContainer.appendChild(btn);
+        });
+    }
 
     nextButton.addEventListener('click', function() {
         const selectedRole = roleSelect.value;
@@ -71,22 +102,24 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        // Сохраняем роль в скрытом поле
+        // Сохраняем роль
         selectedRoleField.value = selectedRole;
 
         // Обновляем заголовок
         formTitle.textContent = 'Регистрация ' +
-            (selectedRole === 'повар' ? 'повара' :
-             selectedRole === 'ученик' ? 'ученика' : 'администратора');
+            (selectedRole === 'cook' ? 'повара' :
+             selectedRole === 'student' ? 'ученика' : 'администратора');
 
-        // Показываем/скрываем поле аллергенов
-        if (selectedRole === 'ученик') {
+        // Показываем/скрываем аллергены
+        if (selectedRole === 'student') {
             allergensField.style.display = 'block';
+            initAllergenButtons(); // создаём кнопки при первом показе
         } else {
             allergensField.style.display = 'none';
+            allergensInput.value = ''; // сбрасываем, если не студент
         }
 
-        // Переключаем видимость
+        // Переключаем шаг
         step1Div.style.display = 'none';
         commonFieldsDiv.style.display = 'block';
     });
@@ -95,6 +128,13 @@ document.addEventListener('DOMContentLoaded', function() {
         step1Div.style.display = 'block';
         commonFieldsDiv.style.display = 'none';
         selectedRoleField.value = '';
+        allergensInput.value = ''; // сброс аллергенов
+
+        // Опционально: сбросить визуальное состояние кнопок
+        document.querySelectorAll('#allergyCheckboxes .btn').forEach(btn => {
+            btn.classList.remove('btn-primary');
+            btn.classList.add('btn-outline-secondary');
+        });
     });
 });
 </script>

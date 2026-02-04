@@ -7,7 +7,6 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* CSS стили */
         :root {
             --primary-color: #4e73df;
             --secondary-color: #858796;
@@ -129,7 +128,7 @@
             margin-bottom: 0.5rem;
         }
 
-        .dish-card .dish-desc {
+        .dish-card .dish-allergy {
             color: #858796;
             font-size: 0.9rem;
         }
@@ -138,6 +137,12 @@
             color: var(--success-color);
             font-weight: 700;
             margin-top: 0.5rem;
+        }
+
+        .rating-stars {
+            color: #ffc107;
+            font-weight: bold;
+            letter-spacing: -2px;
         }
 
         .allergy-item {
@@ -163,22 +168,6 @@
             border-bottom: none;
         }
 
-        .quantity-controls {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-top: 5px;
-        }
-
-        .quantity-btn {
-            width: 30px;
-            height: 30px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 50%;
-        }
-
         .support-form .form-control {
             margin-bottom: 1rem;
         }
@@ -193,20 +182,16 @@
             border-color: #2653d4;
         }
 
-        /* Адаптивность */
         @media (max-width: 768px) {
             .sidebar {
                 margin-left: -250px;
             }
-
             .sidebar.show {
                 margin-left: 0;
             }
-
             .main-content {
                 margin-left: 0;
             }
-
             .menu-toggle {
                 display: block;
             }
@@ -214,7 +199,7 @@
     </style>
 </head>
 <body>
-    <!-- Кнопка меню для мобильных устройств -->
+    <!-- Кнопка меню для мобильных -->
     <button class="btn btn-primary menu-toggle" id="menuToggle">
         <i class="fas fa-bars"></i>
     </button>
@@ -225,32 +210,30 @@
             <div class="avatar">
                 <i class="fas fa-user-graduate"></i>
             </div>
-            <h5 class="mb-1">{{username}}</h5>
+            <h5 class="mb-1">{{ username }}</h5>
             <p class="mb-0 text-light">ученик</p>
+            <p class="mb-0 text-light">Баланс: <strong>{{ "%.2f"|format(balance|float) }} ₽</strong></p>
         </div>
-
         <nav class="nav flex-column">
             <a class="nav-link active" href="#" data-content="breakfast">
-                <i class="fas fa-coffee"></i>
-                <span>Завтрак</span>
+                <i class="fas fa-coffee"></i> Завтрак
             </a>
             <a class="nav-link" href="#" data-content="lunch">
-                <i class="fas fa-utensils"></i>
-                <span>Обед</span>
+                <i class="fas fa-utensils"></i> Обед
             </a>
             <a class="nav-link" href="#" data-content="allergies">
-                <i class="fas fa-allergies"></i>
-                <span>Аллергии</span>
+                <i class="fas fa-allergies"></i> Аллергии
+            </a>
+            <a class="nav-link" href="#" data-content="addMoney">
+                <i class="fa-solid fa-wallet"></i> пополнить баланс
             </a>
             <a class="nav-link" href="#" data-content="cart">
-                <i class="fas fa-shopping-cart"></i>
-                <span>Корзина</span>
-                <span class="badge bg-danger ms-auto" id="cartCounter">3</span>
+                <i class="fas fa-shopping-cart"></i> Корзина
             </a>
             <a class="nav-link" href="#" data-content="support">
-                <i class="fas fa-headset"></i>
-                <span>Техподдержка</span>
+                <i class="fas fa-headset"></i> Техподдержка
             </a>
+            <a href="/logout" class="btn btn-outline-danger mt-3 mx-3">Выйти</a>
         </nav>
     </div>
 
@@ -260,142 +243,38 @@
             <!-- Завтрак -->
             <div class="content-section" id="breakfast">
                 <h2 class="page-title">Завтрак</h2>
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="dish-card" data-id="1" data-name="Каша овсяная с фруктами" data-price="120" data-category="breakfast">
-                            <h5 class="dish-title">Каша овсяная с фруктами</h5>
-                            <p class="dish-desc">Овсяные хлопья с молоком, яблоком и изюмом</p>
-                            <div class="dish-price">120 ₽</div>
-                            <button class="btn btn-sm btn-primary mt-2 add-to-cart">Добавить в корзину</button>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="dish-card" data-id="2" data-name="Омлет с овощами" data-price="150" data-category="breakfast">
-                            <h5 class="dish-title">Омлет с овощами</h5>
-                            <p class="dish-desc">Яичный омлет с помидорами, болгарским перцем и зеленью</p>
-                            <div class="dish-price">150 ₽</div>
-                            <button class="btn btn-sm btn-primary mt-2 add-to-cart">Добавить в корзину</button>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="dish-card" data-id="3" data-name="Творожная запеканка" data-price="130" data-category="breakfast">
-                            <h5 class="dish-title">Творожная запеканка</h5>
-                            <p class="dish-desc">Нежная запеканка из творога с изюмом и ванилью</p>
-                            <div class="dish-price">130 ₽</div>
-                            <button class="btn btn-sm btn-primary mt-2 add-to-cart">Добавить в корзину</button>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="dish-card" data-id="4" data-name="Блины с вареньем" data-price="140" data-category="breakfast">
-                            <h5 class="dish-title">Блины с вареньем</h5>
-                            <p class="dish-desc">Домашние блины с клубничным вареньем</p>
-                            <div class="dish-price">140 ₽</div>
-                            <button class="btn btn-sm btn-primary mt-2 add-to-cart">Добавить в корзину</button>
-                        </div>
-                    </div>
-                </div>
+                <div id="breakfast-items" class="row"></div>
             </div>
 
             <!-- Обед -->
             <div class="content-section" id="lunch" style="display: none;">
                 <h2 class="page-title">Обед</h2>
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="dish-card" data-id="5" data-name="Пюре с котлетой" data-price="200" data-category="lunch">
-                            <h5 class="dish-title">Пюре с котлетой</h5>
-                            <p class="dish-desc">Картофельное пюре с куриной котлетой и овощным салатом</p>
-                            <div class="dish-price">200 ₽</div>
-                            <button class="btn btn-sm btn-primary mt-2 add-to-cart">Добавить в корзину</button>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="dish-card" data-id="6" data-name="Суп куриный с лапшой" data-price="180" data-category="lunch">
-                            <h5 class="dish-title">Суп куриный с лапшой</h5>
-                            <p class="dish-desc">Наваристый куриный суп с домашней лапшой</p>
-                            <div class="dish-price">180 ₽</div>
-                            <button class="btn btn-sm btn-primary mt-2 add-to-cart">Добавить в корзину</button>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="dish-card" data-id="7" data-name="Гречка с гуляшом" data-price="220" data-category="lunch">
-                            <h5 class="dish-title">Гречка с гуляшом</h5>
-                            <p class="dish-desc">Гречневая каша с говяжьим гуляшом и морковью</p>
-                            <div class="dish-price">220 ₽</div>
-                            <button class="btn btn-sm btn-primary mt-2 add-to-cart">Добавить в корзину</button>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="dish-card" data-id="8" data-name="Рыба запеченная с овощами" data-price="240" data-category="lunch">
-                            <h5 class="dish-title">Рыба запеченная с овощами</h5>
-                            <p class="dish-desc">Филе трески с картофелем и морковью под сырной корочкой</p>
-                            <div class="dish-price">240 ₽</div>
-                            <button class="btn btn-sm btn-primary mt-2 add-to-cart">Добавить в корзину</button>
-                        </div>
-                    </div>
-                </div>
+                <div id="lunch-items" class="row"></div>
             </div>
 
             <!-- Аллергии -->
             <div class="content-section" id="allergies" style="display: none;">
                 <h2 class="page-title">Мои аллергии</h2>
                 <div class="content-card">
-                    <p class="mb-3">Здесь вы можете управлять списком продуктов, на которые у вас аллергия:</p>
-
-                    <div id="allergiesList">
-                        <div class="allergy-item">
-                            <span><i class="fas fa-pepper-hot text-danger me-2"></i>Острые продукты</span>
-                            <button class="btn btn-sm btn-outline-danger">Удалить</button>
-                        </div>
-                        <div class="allergy-item">
-                            <span><i class="fas fa-seedling text-success me-2"></i>Орехи</span>
-                            <button class="btn btn-sm btn-outline-danger">Удалить</button>
-                        </div>
-                        <div class="allergy-item">
-                            <span><i class="fas fa-egg text-warning me-2"></i>Яйца</span>
-                            <button class="btn btn-sm btn-outline-danger">Удалить</button>
-                        </div>
-                    </div>
-
-                    <hr class="my-4">
-
-                    <h5>Добавить новую аллергию</h5>
-                    <div class="row">
-                        <div class="col-md-8">
-                            <div class="input-group mb-3">
-                                <input type="text" class="form-control" id="newAllergy" placeholder="Например: молочные продукты">
-                                <button class="btn btn-primary" id="addAllergyBtn">Добавить</button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="alert alert-info mt-3">
-                        <i class="fas fa-info-circle me-2"></i>
-                        Система автоматически исключит блюда с указанными продуктами из рекомендаций.
-                    </div>
+                    <p>Аллергии отображаются на основе вашего профиля.</p>
                 </div>
             </div>
 
             <!-- Корзина -->
-            <div class="content-section" id="cart" style="display: none;">
-                <h2 class="page-title">Моя корзина</h2>
-                <div class="content-card">
-                    <div id="cartItems">
-                    </div>
-
-                    <hr class="my-4">
-
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h5 class="mb-0">Итого:</h5>
-                            <p class="text-muted mb-0" id="itemCount">0 товаров на сумму</p>
-                        </div>
-                        <div class="h4 text-primary mb-0" id="cartTotal">0 ₽</div>
-                    </div>
-
-                    <div class="d-grid gap-2 mt-4">
-                        <button class="btn btn-primary btn-lg" id="checkoutBtn">Оформить заказ</button>
-                        <button class="btn btn-outline-secondary" id="clearCartBtn">Очистить корзину</button>
-                    </div>
+            <div id="cart" class="content-section" style="display:none;">
+                <h3>Ваша корзина</h3>
+                <div id="cart-items"></div>
+                <button id="clear-cart" class="btn btn-sm btn-outline-danger mt-2">Очистить корзину</button>
+                <form id="typeForm" class="text-center mt-5">
+                    <label for="type">Способ оплаты:</label>
+                    <select name="type" id="type" required>
+                        <option value="">-- Выберите --</option>
+                        <option value="single">Единоразово</option>
+                        <option value="subscribe">Подписка</option>
+                    </select>
+                </form>
+                <div class="text-center mt-5">
+                    <button id="order-btn" class="btn btn-success btn-lg">Оформить заказ</button>
                 </div>
             </div>
 
@@ -403,64 +282,345 @@
             <div class="content-section" id="support" style="display: none;">
                 <h2 class="page-title">Техническая поддержка</h2>
                 <div class="content-card">
-                    <p>Если у вас возникли проблемы с работой системы, пожалуйста, опишите их ниже:</p>
-
-                    <div class="support-form">
-                        <div class="mb-3">
-                            <label for="supportTopic" class="form-label">Тема обращения</label>
-                            <select class="form-control" id="supportTopic">
-                                <option value="">Выберите тему</option>
-                                <option value="technical">Техническая проблема</option>
-                                <option value="menu">Вопрос по меню</option>
-                                <option value="allergy">Проблема с аллергиями</option>
-                                <option value="payment">Оплата и заказы</option>
-                                <option value="other">Другое</option>
-                            </select>
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="supportMessage" class="form-label">Сообщение</label>
-                            <textarea class="form-control" id="supportMessage" rows="5" placeholder="Опишите вашу проблему подробно..."></textarea>
-                        </div>
-
-                        <div class="alert alert-warning">
-                            <i class="fas fa-exclamation-triangle me-2"></i>
-                            Время ответа технической поддержки: до 24 часов в рабочие дни.
-                        </div>
-
-                        <button class="btn btn-primary">Отправить обращение</button>
+                    <p>Если у вас возникли проблемы — напишите нам!</p>
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Обращения обрабатываются в течение 24 часов.
                     </div>
+                    <p><strong>Телефон:</strong> +7 (123) 456-78-99<br>
+                       <strong>Email:</strong> support@school-dining.ru</p>
+                </div>
+            </div>
 
-                    <hr class="my-4">
-
-                    <h5>Контакты поддержки</h5>
-                    <div class="row mt-3">
-                        <div class="col-md-6">
-                            <div class="d-flex align-items-center mb-3">
-                                <i class="fas fa-phone text-primary me-3 fa-lg"></i>
-                                <div>
-                                    <div class="fw-bold">Телефон</div>
-                                    <div>+7 (123) 456-78-99</div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="d-flex align-items-center mb-3">
-                                <i class="fas fa-envelope text-primary me-3 fa-lg"></i>
-                                <div>
-                                    <div class="fw-bold">Email</div>
-                                    <div>support@school-dining.ru</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+            <!-- пополнить баланс -->
+            <div class="content-section" id="addMoney" style="display: none;">
+                <h2 class="page-title">Пополнить баланс</h2>
+                <div class="content-card">
+                    <form method="POST" action="/api/updateBalance">
+                        <label for="addBalance">Введите сумму:</label>
+                        <input type="number" name="amount" id="addBalance" placeholder="Например: 200" class="form-control mb-2" required>
+                        <button type="submit" class="btn btn-success">Пополнить</button>
+                    </form>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Bootstrap JS с Popper -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
-</body>
+    <!-- Модальное окно отзывов -->
+    <div class="modal fade" id="reviewsModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Отзывы: <span id="modal-dish-name"></span></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="reviews-list" class="mb-3">
+                        <p class="text-muted">Загрузка...</p>
+                    </div>
 
+                    <h6>Оставить отзыв:</h6>
+                    <form id="review-form">
+                        <input type="hidden" id="review-dish-name">
+                        <div class="mb-2">
+                            <label class="form-label">Рейтинг</label>
+                            <select class="form-select" id="review-rating" required>
+                                <option value="5">★★★★★ (5)</option>
+                                <option value="4">★★★★☆ (4)</option>
+                                <option value="3">★★★☆☆ (3)</option>
+                                <option value="2">★★☆☆☆ (2)</option>
+                                <option value="1">★☆☆☆☆ (1)</option>
+                            </select>
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label">Комментарий</label>
+                            <textarea class="form-control" id="review-comment" rows="2" maxlength="200"></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Отправить</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // === КОРЗИНА ===
+        function getCart() {
+            const data = localStorage.getItem('cart');
+            if (!data) return [];
+            try {
+                const parsed = JSON.parse(data);
+                return Array.isArray(parsed) ? parsed : [];
+            } catch (e) {
+                localStorage.removeItem('cart');
+                return [];
+            }
+        }
+
+        function saveCart(cart) {
+            localStorage.setItem('cart', JSON.stringify(cart));
+        }
+
+        function addToCart(dishArray) {
+            const cart = getCart();
+            cart.push(dishArray);
+            saveCart(cart);
+        }
+
+        function clearCart() {
+            localStorage.removeItem('cart');
+        }
+
+        function renderCart() {
+            const cart = getCart();
+            const container = document.getElementById('cart-items');
+            if (!container) return;
+
+            if (cart.length === 0) {
+                container.innerHTML = '<p class="text-muted">Корзина пуста</p>';
+                return;
+            }
+
+            const itemsHtml = cart.map((dish, index) => `
+                <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-2">
+                    <span>${dish[1]} — ${dish[2]} ₽</span>
+                    <button class="btn btn-sm btn-outline-secondary remove-item" data-index="${index}">Удалить</button>
+                </div>
+            `).join('');
+
+            container.innerHTML = itemsHtml;
+
+            document.querySelectorAll('.remove-item').forEach(btn => {
+                btn.onclick = () => {
+                    const index = parseInt(btn.dataset.index, 10);
+                    const cart = getCart();
+                    cart.splice(index, 1);
+                    saveCart(cart);
+                    renderCart();
+                };
+            });
+        }
+
+        // === ЗАГРУЗКА МЕНЮ ===
+        async function loadMenu() {
+            try {
+                const response = await fetch('/api/menu');
+                if (!response.ok) throw new Error('Ошибка сервера');
+
+                const dishes = await response.json();
+                if (!Array.isArray(dishes)) throw new Error('Неверный формат');
+
+                document.getElementById('breakfast-items').innerHTML = '';
+                document.getElementById('lunch-items').innerHTML = '';
+
+                const breakfastItems = dishes.filter(d => d[0] === 'breakfast');
+                const lunchItems = dishes.filter(d => d[0] === 'lunch');
+
+                function createDishCard(dish) {
+                    const allergens = dish[3] === 'none' ? 'нет' : dish[3];
+                    // dish = [cat, name, price, allergens, avg_rating, review_count]
+                    const avgRating = dish[4] || 0;
+                    const reviewCount = dish[5] || 0;
+                    const fullStars = Math.round(avgRating);
+                    const stars = '★'.repeat(fullStars) + '☆'.repeat(5 - fullStars);
+
+                    return `
+                        <div class="col-md-6 mb-3">
+                            <div class="dish-card"
+                                 data-name="${dish[1]}"
+                                 data-price="${dish[2]}"
+                                 data-category="${dish[0]}"
+                                 data-allergy="${dish[3]}">
+                                <h5 class="dish-title">${dish[1]}</h5>
+                                <div class="dish-price">${dish[2]} ₽</div>
+                                <div class="dish-allergy">Аллерген: ${allergens}</div>
+                                <div class="d-flex justify-content-between mt-2">
+                                    <button class="btn btn-sm btn-primary add-to-cart">Добавить в корзину</button>
+                                    <div class="text-end">
+                                        <div class="rating-stars">${stars}</div>
+                                        <small class="text-muted">${reviewCount} отзыв(ов)</small>
+                                        <button class="btn btn-sm btn-outline-secondary ms-2 show-reviews"
+                                                data-dish-name="${dish[1]}">💬</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                const breakfastContainer = document.getElementById('breakfast-items');
+                const lunchContainer = document.getElementById('lunch-items');
+
+                breakfastItems.forEach(d => breakfastContainer.innerHTML += createDishCard(d));
+                lunchItems.forEach(d => lunchContainer.innerHTML += createDishCard(d));
+
+                attachCartHandlers();
+                attachReviewHandlers();
+            } catch (error) {
+                console.error('Ошибка загрузки меню:', error);
+                alert('Не удалось загрузить меню');
+            }
+        }
+
+        // === ОБРАБОТЧИКИ ===
+        function attachCartHandlers() {
+            document.querySelectorAll('.add-to-cart').forEach(button => {
+                button.onclick = function () {
+                    const card = this.closest('.dish-card');
+                    const dishArray = [
+                        card.dataset.category,
+                        card.dataset.name,
+                        parseFloat(card.dataset.price),
+                        card.dataset.allergy || 'none'
+                    ];
+                    addToCart(dishArray);
+                    alert(`✅ Добавлено: ${dishArray[1]}`);
+                    renderCart();
+                };
+            });
+        }
+
+        // === ЗАГРУЗКА ОТЗЫВОВ ===
+        async function loadReviews(dishName) {
+            const container = document.getElementById('reviews-list');
+            container.innerHTML = '<p class="text-muted">Загрузка...</p>';
+
+            try {
+                const response = await fetch(`/api/reviews?dish=${encodeURIComponent(dishName)}`);
+                const reviews = await response.json();
+
+                if (reviews.length === 0) {
+                    container.innerHTML = '<p class="text-muted">Отзывов пока нет.</p>';
+                    return;
+                }
+
+                const html = reviews.map(r => `
+                    <div class="border-bottom pb-2 mb-2">
+                        <div class="rating-stars">${'★'.repeat(r.rating)}${'☆'.repeat(5 - r.rating)}</div>
+                        <p class="mb-0">${r.comment}</p>
+                        <small class="text-muted">— ${r.username}</small>
+                        <small class="text-muted float-end">${r.date || ''}</small>
+                    </div>
+                `).join('');
+
+                container.innerHTML = html;
+            } catch (e) {
+                console.error('Ошибка загрузки отзывов:', e);
+                container.innerHTML = '<p class="text-danger">Не удалось загрузить отзывы.</p>';
+            }
+        }
+
+        function attachReviewHandlers() {
+            document.querySelectorAll('.show-reviews').forEach(btn => {
+                btn.onclick = async () => {
+                    const dishName = btn.dataset.dishName;
+                    document.getElementById('modal-dish-name').textContent = dishName;
+                    document.getElementById('review-dish-name').value = dishName;
+
+                    await loadReviews(dishName);
+
+                    const modal = new bootstrap.Modal(document.getElementById('reviewsModal'));
+                    modal.show();
+                };
+            });
+        }
+
+        // === ОТПРАВКА ОТЗЫВА ===
+        document.getElementById('review-form')?.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const dishName = document.getElementById('review-dish-name').value;
+            const rating = document.getElementById('review-rating').value;
+            const comment = document.getElementById('review-comment').value.trim();
+
+            try {
+                const response = await fetch('/api/review', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        dish_name: dishName,
+                        rating: parseInt(rating),
+                        comment: comment
+                    })
+                });
+
+                if (response.ok) {
+                    alert('Спасибо за отзыв!');
+                    document.getElementById('review-comment').value = '';
+                    loadReviews(dishName); // Обновить список
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('reviewsModal'));
+                    modal.hide();
+                } else {
+                    const err = await response.json().catch(() => ({}));
+                    alert('Ошибка: ' + (err.error || 'неизвестная ошибка'));
+                }
+            } catch (e) {
+                console.error('Ошибка:', e);
+                alert('Ошибка сети.');
+            }
+        });
+
+        // === НАВИГАЦИЯ ===
+        document.querySelectorAll('.nav-link[data-content]').forEach(link => {
+            link.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelectorAll('.nav-link').forEach(el => el.classList.remove('active'));
+                this.classList.add('active');
+
+                document.querySelectorAll('.content-section').forEach(sec => sec.style.display = 'none');
+
+                const targetId = this.getAttribute('data-content');
+                const target = document.getElementById(targetId);
+                if (target) {
+                    target.style.display = 'block';
+                    if (targetId === 'cart') renderCart();
+                }
+            });
+        });
+
+        // === ОФОРМЛЕНИЕ ЗАКАЗА ===
+        document.addEventListener('DOMContentLoaded', () => {
+            loadMenu();
+
+            document.getElementById('order-btn')?.addEventListener('click', async () => {
+                const cart = getCart();
+                if (cart.length === 0) {
+                    alert('Корзина пуста!');
+                    return;
+                }
+
+                const total = cart.reduce((sum, dish) => sum + dish[2], 0);
+                const orderData = {
+                    items: cart,
+                    total: total,
+                    type: document.getElementById('type').value
+                };
+
+                try {
+                    const response = await fetch('/api/order', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(orderData)
+                    });
+
+                    if (response.ok) {
+                        alert(`статус: Оплата прошла успешно \nСумма: ${total} ₽`);
+                        clearCart();
+                        renderCart();
+                    } else {
+                        alert('Ошибка оформления заказа.');
+                    }
+                } catch (error) {
+                    console.error('Ошибка сети:', error);
+                    alert('Не удалось отправить заказ.');
+                }
+            });
+
+            document.getElementById('clear-cart')?.addEventListener('click', () => {
+                clearCart();
+                renderCart();
+            });
+        });
+    </script>
+</body>
 </html>
