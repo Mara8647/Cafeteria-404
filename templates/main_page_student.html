@@ -212,7 +212,7 @@
             </div>
             <h5 class="mb-1">{{ username }}</h5>
             <p class="mb-0 text-light">ученик</p>
-            <p class="mb-0 text-light">Баланс: <strong>{{ "%.2f"|format(balance|float) }} ₽</strong></p>
+            <p class="mb-0 text-light" id="balance-display">Баланс: <strong>{{ "%.2f"|format(balance|float) }} ₽</strong></p>
         </div>
         <nav class="nav flex-column">
             <a class="nav-link active" href="#" data-content="breakfast">
@@ -220,9 +220,6 @@
             </a>
             <a class="nav-link" href="#" data-content="lunch">
                 <i class="fas fa-utensils"></i> Обед
-            </a>
-            <a class="nav-link" href="#" data-content="allergies">
-                <i class="fas fa-allergies"></i> Аллергии
             </a>
             <a class="nav-link" href="#" data-content="addMoney">
                 <i class="fa-solid fa-wallet"></i> пополнить баланс
@@ -250,14 +247,6 @@
             <div class="content-section" id="lunch" style="display: none;">
                 <h2 class="page-title">Обед</h2>
                 <div id="lunch-items" class="row"></div>
-            </div>
-
-            <!-- Аллергии -->
-            <div class="content-section" id="allergies" style="display: none;">
-                <h2 class="page-title">Мои аллергии</h2>
-                <div class="content-card">
-                    <p>Аллергии отображаются на основе вашего профиля.</p>
-                </div>
             </div>
 
             <!-- Корзина -->
@@ -419,7 +408,6 @@
 
                 function createDishCard(dish) {
                     const allergens = dish[3] === 'none' ? 'нет' : dish[3];
-                    // dish = [cat, name, price, allergens, avg_rating, review_count]
                     const avgRating = dish[4] || 0;
                     const reviewCount = dish[5] || 0;
                     const fullStars = Math.round(avgRating);
@@ -439,7 +427,7 @@
                                     <button class="btn btn-sm btn-primary add-to-cart">Добавить в корзину</button>
                                     <div class="text-end">
                                         <div class="rating-stars">${stars}</div>
-                                        <small class="text-muted">${reviewCount} отзыв(ов)</small>
+                                        <small class="text-muted">отзывы</small>
                                         <button class="btn btn-sm btn-outline-secondary ms-2 show-reviews"
                                                 data-dish-name="${dish[1]}">💬</button>
                                     </div>
@@ -602,13 +590,15 @@
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(orderData)
                     });
+                    const result = await response.json();
 
                     if (response.ok) {
-                        alert(`статус: Оплата прошла успешно \nСумма: ${total} ₽`);
+                        alert(`статус: ${result.status}`);
+                        document.getElementById('balance-display').textContent = result.new_balance.toFixed(2) + ' ₽';
                         clearCart();
                         renderCart();
                     } else {
-                        alert('Ошибка оформления заказа.');
+                        alert(`Ошибка: ${result.error || 'Не удалось оформить заказ'}`);
                     }
                 } catch (error) {
                     console.error('Ошибка сети:', error);

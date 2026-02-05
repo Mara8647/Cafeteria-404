@@ -1,6 +1,6 @@
 import sqlite3
 from flask import Flask, request, redirect, render_template, url_for, jsonify, session
-from datab import login, dbInitialisation, payment, student
+from datab import login, payment, student
 
 app = Flask(__name__, template_folder='./templates')
 app.secret_key = 'cafe_secret_key_2026'  # нужно создать нормальный ключ
@@ -60,7 +60,7 @@ def register_page():
         with sqlite3.connect('cafe.db') as conn:
             cursor = conn.cursor()
 
-            cursor.execute("INSERT INTO users (username, email, password, payment_type, user_balance, role, allergies) VALUES (?, ?, ?, ?, ?, ?, ?)", 
+            cursor.execute("INSERT INTO users (username, email, password, payment_type, user_balance, role, allergies) VALUES (?, ?, ?, ?, ?, ?, ?)",
                             (username, email, password, 'single', 0.0, role, allergies))
 
             user_id = cursor.lastrowid
@@ -108,7 +108,25 @@ def menu():
         allergies = row[0] if row else 'none'
 
     menu_items = student.view_menu(allergies)
-    return jsonify(menu_items or [])
+
+    enhanced_menu = []
+    for item in menu_items:
+        dish_name = item[1]
+        with sqlite3.connect('cafe.db') as conn:
+            c = conn.cursor()
+            c.execute("""
+                SELECT AVG(rating) as avg_rating, COUNT(*) as count
+                FROM reviews
+                WHERE menu_id = (SELECT id FROM menu WHERE name = ? AND date = ?)
+            """, (dish_name, student.current_date))
+            row = c.fetchone()
+            avg_rating = round(row[0], 1) if row[0] else 0
+            review_count = row[1] if row[1] else 0
+
+        enhanced_item = list(item) + [avg_rating, review_count]  # добавляем [avg, count]
+        enhanced_menu.append(enhanced_item)
+
+    return jsonify(enhanced_menu)
 
 
 # === API: Создать заказ ===
@@ -123,12 +141,18 @@ def create_order():
     total = data.get('total', 0)
     payment_type = data.get('type', '')
 
+    with sqlite3.connect('cafe.db') as conn:
+        cursor = conn.cursor()
+        balance = cursor.execute("""SELECT user_balance FROM users WHERE id = ?""", (user['id'],)).fetchone()[0]
+        new_balance = balance - total
+
     # Сохраняем заказ и оплату
     status = payment.pay(user['username'], items, payment_type)
     student.receive_meal(user['username'], items)
     print(status)
 
     return jsonify({
+        "new_balance": new_balance,
         "status": status,
         "total": total
     })
@@ -138,23 +162,15 @@ def create_order():
 @app.route('/api/review', methods=['POST'])
 def api_leave_review():
     user = get_current_user()
-    if not user:
-        return jsonify({"error": "Не авторизован"}), 401
 
     data = request.get_json()
     meal_name = data.get('dish_name')
     rating = data.get('rating')
     comment = data.get('comment', '').strip()
 
-    if not meal_name or not isinstance(rating, int) or not (1 <= rating <= 5):
-        return jsonify({"error": "Неверные данные"}), 400
+    print(meal_name, rating, comment)
 
-    success = student.leave_review(
-        username=user['username'],
-        meal_name=meal_name,
-        rating=rating,
-        comment=comment
-    )
+    success = student.leave_review(username=user['username'], meal_name=meal_name, rating=rating, comment=comment)
 
     if success:
         return jsonify({"status": "ok"})
@@ -168,7 +184,7 @@ def get_reviews():
     if not dish_name:
         return jsonify([])
 
-    with sqlite3.connect('cafe.db', timeout=20.0) as conn:
+    with sqlite3.connect('cafe.db') as conn:
         c = conn.cursor()
         c.execute("""
             SELECT u.username, r.rating, r.comment, r.created_at
@@ -220,7 +236,7 @@ def logout():
 
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=8080)
+    app.run(debug=True, host='0.0.0.0', port=5000)
 
 
 
