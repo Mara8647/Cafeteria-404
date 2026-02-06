@@ -10,18 +10,31 @@ current_date = date.today().isoformat()
 
 
 def view_menu(student_allergie):
+    print(student_allergie)
     with sqlite3.connect('cafe.db') as conn:
         c = conn.cursor()
-        if student_allergie != "none":
-            c.execute("SELECT meal_type, name, price, allergies FROM menu WHERE date = ? AND allergies != ?", (current_date, student_allergie))
-        else:
-            c.execute("SELECT meal_type, name, price, allergies FROM menu WHERE date = ?", (current_date,))
+        c.execute("SELECT meal_type, name, price, allergies FROM menu WHERE date = ?", (current_date,))
         items = c.fetchall()
 
-        if not items:
-            return []
+    if student_allergie and student_allergie != "none":
+        user_allergens = {a.strip() for a in student_allergie.split(',')}
 
-        return items
+        filtered_items = []
+        for item in items:
+            meal_type, name, price, allergies = item
+
+            if allergies == 'none':
+                filtered_items.append(item)
+                continue
+
+            dish_allergens = {a.strip() for a in allergies.split(',')}
+
+            if not (user_allergens & dish_allergens):
+                filtered_items.append(item)
+
+        items = filtered_items
+
+    return items if items else []
 
 
 def leave_review(username, meal_name, rating, comment):

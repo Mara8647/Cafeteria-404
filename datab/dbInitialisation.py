@@ -12,10 +12,10 @@ def init_db():
             username TEXT UNIQUE NOT NULL,
             email TEXT UNIQUE NOT NULL,
             password TEXT NOT NULL,
-            payment_type TEXT CHECK(payment_type IN ('single','subscription')),
+            payment_type TEXT CHECK (payment_type IN ('single','subscription')),
             user_balance REAL NOT NULL,
-            role TEXT NOT NULL CHECK(role IN ('student', 'cook', 'admin')),
-            allergies TEXT CHECK(allergies IN ('peanut', 'milk', 'eggs', 'wheat', 'nuts', 'fish', 'soy', 'crustaceans', 'none'))
+            role TEXT NOT NULL CHECK (role IN ('student', 'cook', 'admin')),
+            allergies TEXT NOT NULL
         )
     ''')
 
@@ -74,7 +74,7 @@ def init_db():
     c.execute('''
         CREATE TABLE IF NOT EXISTS inventory (
             id INTEGER PRIMARY KEY,
-            product_name TEXT NOT NULL UNIQUE,
+            product_name TEXT NOT NULL,
             quantity REAL NOT NULL DEFAULT 0.0,
             unit TEXT NOT NULL DEFAULT 'kg'
         )
@@ -87,6 +87,7 @@ def init_db():
             user_id INTEGER NOT NULL,
             menu_id INTEGER,
             rating INTEGER,
+            average_rating REAL,
             comment TEXT,
             created_at TEXT NOT NULL DEFAULT CURRENT_DATE
         )
@@ -95,5 +96,4 @@ def init_db():
     conn.commit()
     conn.close()
 
-if __name__ == '__main__':
-    init_db()
+init_db()

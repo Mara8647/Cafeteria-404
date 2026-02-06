@@ -1,6 +1,9 @@
 import sqlite3
 from flask import Flask, request, redirect, render_template, url_for, jsonify, session
-from datab import login, payment, student
+from datab import login, payment, student, dbInitialisation
+dbInitialisation.init_db()
+from datab import cook
+
 
 app = Flask(__name__, template_folder='./templates')
 app.secret_key = 'cafe_secret_key_2026'  # нужно создать нормальный ключ
@@ -60,8 +63,7 @@ def register_page():
         with sqlite3.connect('cafe.db') as conn:
             cursor = conn.cursor()
 
-            cursor.execute("INSERT INTO users (username, email, password, payment_type, user_balance, role, allergies) VALUES (?, ?, ?, ?, ?, ?, ?)",
-                            (username, email, password, 'single', 0.0, role, allergies))
+            login.registration(username, email, password, role, allergies)
 
             user_id = cursor.lastrowid
 
