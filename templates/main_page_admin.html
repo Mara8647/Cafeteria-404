@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Меню админа</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* CSS стили */
+        :root {
+            --primary-color: #4e73df;
+            --secondary-color: #858796;
+            --success-color: #1cc88a;
+            --info-color: #36b9cc;
+            --warning-color: #f6c23e;
+            --danger-color: #e74a3b;
+            --accept-color: #00ff40;
+            --decline-color: #ff0000;
+        }
+    body {
+            background-color: #f8f9fc;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Шрифты (?)*/
+        }
+        .sidebar {
+            min-height: 100vh;
+            background: linear-gradient(180deg, var(--primary-color) 0%, #224abe 100%);
+            color: white;
+            position: fixed;
+            width: 250px;
+            transition: all 0.3s;
+            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+            z-index: 1000;
+        }
+
+        .sidebar .user-info {
+            padding: 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
+        }
+
+        .sidebar .user-info .avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background-color: white;
+            color: var(--primary-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+            font-size: 2rem;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .sidebar .nav {
+            padding: 1rem 0;
+        }
+
+        .sidebar .nav-link {
+            color: rgba(255, 255, 255, 0.8);
+            padding: 0.75rem 1.5rem;
+            margin: 0.2rem 0;
+            border-left: 3px solid transparent;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+        }
+
+        .sidebar .nav-link:hover, .sidebar .nav-link.active {
+            color: white;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-left-color: white;
+            text-decoration: none;
+        }
+
+        .sidebar .nav-link i {
+            width: 20px;
+            margin-right: 10px;
+            text-align: center;
+        }
+
+        .main-content {
+            margin-left: 250px;
+            padding: 20px;
+            min-height: 100vh;
+            transition: all 0.3s;
+        }
+
+        .content-card {
+            background-color: white;
+            border-radius: 0.35rem;
+            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+            margin-bottom: 1.5rem;
+            padding: 1.5rem;
+        }
+
+        .page-title {
+            color: #5a5c69;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            font-size: 1.75rem;
+        }
+
+        .menu-toggle {
+            display: none;
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            z-index: 1100;
+        }
+
+        .dish-card {
+            border: 1px solid #e3e6f0;
+            border-radius: 0.35rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            transition: all 0.3s;
+        }
+
+        .dish-card:hover {
+            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .dish-card .dish-title {
+            color: var(--primary-color);
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .dish-card .dish-desc {
+            color: #858796;
+            font-size: 0.9rem;
+        }
+
+        .dish-card .dish-price {
+            color: var(--success-color);
+            font-weight: 700;
+            margin-top: 0.5rem;
+        }
+
+        .allergy-item {
+            background-color: #f8f9fc;
+            border: 1px solid #e3e6f0;
+            border-radius: 0.35rem;
+            padding: 0.75rem 1rem;
+            margin-bottom: 0.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #e3e6f0;
+        }
+
+        .cart-item:last-child {
+            border-bottom: none;
+        }
+
+        .quantity-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 5px;
+        }
+
+        .quantity-btn {
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+        }
+
+        .support-form .form-control {
+            margin-bottom: 1rem;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        .btn-accept {
+            background-color: var(--accept-color);
+            border-color: var(--accept-color);
+        }
+        .btn-decline {
+            background-color: var(--decline-color);
+            border-color: var(--decline-color);
+        }
+        .btn-primary:hover {
+            background-color: #2e59d9;
+            border-color: #2653d4;
+        }
+        .btn-accept:hover {
+            background-color: #00ff40;
+            border-color: #00ff40;
+        }
+        .btn-decline:hover {
+            background-color: #ff0000;
+            border-color: #ff0000;
+        }        
+        .stats-title {
+            color: #2f3036;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            font-size: 1.75rem;
+            text-align: center;
+        }
+        .mytext1 {margin-left: 20px}
+        .pending {color: orange}
+        .approved {color: green}
+        .rejected {color: red}
+
+        /* Адаптивность */
+        @media (max-width: 768px) {
+            .sidebar {
+                margin-left: -250px;
+            }
+
+            .sidebar.show {
+                margin-left: 0;
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+
+            .menu-toggle {
+                display: block;
+            }
+        }
+    </style>
+<head>
+<body>
+    <!-- Боковое меню -->
+    <div class="sidebar" id="sidebar">
+        <div class="user-info">
+            <div class="avatar">
+                <i class="fas fa-user-graduate"></i>
+            </div>
+            <h5 class="mb-1">{{username}}</h5>
+            <p class="mb-0 text-light">админ</p>
+        </div>
+
+        <nav class="nav flex-column">
+            <a class="nav-link active" href="#" data-content="stats"> <!-- Замена data-content-->
+                <i class="fa-solid fa-chart-area"></i>
+                <span>Статистика</span>
+            </a>
+            <a class="nav-link" href="#" data-content="requests"> <!-- Замена data-content-->
+                <i class="fa-solid fa-question"></i>
+                <span>Запросы</span>
+                <span class="badge bg-danger ms-auto" id="cartCounter">0</span>
+            </a>
+            <a href="/logout" class="btn btn-outline-danger mt-3 mx-3">Выйти</a>
+        </nav>
+    </div>
+    <!-- Основной контент -->
+    <div class="main-content" id="mainContent">
+        <div id="contentContainer">
+            <!--Статистика-->
+            <div class="content-section" id="stats">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="content-card">
+                        <h4 class="stats-title">Финансы</h4>
+                        <div class="text-center">
+                            <h1 style="color: var(--success-color); font-size: 3rem;">{{income}} ₽</h1>
+                            <p class="text-muted">Выручка за сегодня</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="content-card">
+                    <h4 class="stats-title">Продажи</h4>
+                    <div class="text-center">
+                        <h1 style="color: var(--info-color); font-size: 3rem;">{{count}}</h1>
+                        <p class="text-muted">Блюд продано</p>
+                    </div>
+                </div>
+            </div>
+            </div>
+            </div>
+            <!--Заявки-->
+            <div class="content-section" id="requests" style="display: none;">
+                <h2 class="page-title">Заявки</h2>
+                <div class="row" id="requestsContainer">
+                <!-- JS не подведи, молю... -->
+                <div class="text-center" id="loadingRequests">
+                <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Загрузка...</span>
+            </div>
+        </div>
+    </div>
+    </div>
+    </div>
+    </div>
+    <script>
+    // Обработка навигации на боковой панели
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', function (e) {
+                e.preventDefault();
+
+                // Убираем активный класс у всех пунктов меню
+                document.querySelectorAll('.nav-link').forEach(el => el.classList.remove('active'));
+                // Добавляем активный класс текущему пункту
+                this.classList.add('active');
+
+                // Получаем ID целевого раздела
+                const targetId = this.getAttribute('data-content');
+
+                // Скрываем все разделы
+                document.querySelectorAll('.content-section').forEach(section => {
+                  section.style.display = 'none';
+                });
+
+                // Показываем нужный раздел
+                const targetSection = document.getElementById(targetId);
+                if (targetSection) {
+                  targetSection.style.display = 'block';
+                }
+            });
+        });
+    // Функция загрузки заявок
+    async function loadPurchaseRequests() {
+        try {
+            const response = await fetch('/api/purchase_requests');
+            if (!response.ok) throw new Error('Ошибка загрузки заявок');
+        
+            const requests = await response.json();
+            displayRequests(requests);
+        }    catch (error) {
+            console.error('Ошибка:', error);
+            document.getElementById('requestsContainer').innerHTML = 
+                '<div class="alert alert-danger">Ошибка загрузки заявок</div>';
+        }
+    }
+
+    // Функция отображения заявок
+    function displayRequests(requests) {
+        const container = document.getElementById('requestsContainer');
+    
+        if (requests.length === 0) {
+            container.innerHTML = '<div class="alert alert-info">Нет заявок на рассмотрение</div>';
+            return;
+        }
+    
+        let html = '';
+        requests.forEach(req => {
+            html += `
+            <div class="col-md-6">
+                <div class="dish-card" data-id="${req.id}">
+                    <h5 class="dish-title">Заявка #${req.id} от повара #${req.cook_id}</h5>
+                    <p class="dish-desc">Продукт: ${req.product_name}</p>
+                    <p class="dish-desc">Количество: ${req.quantity}</p>
+                    <div class="dish-price">Дата заявки: ${req.created_at}</div>
+                    <div class="mt-2">
+                        <button class="btn btn-sm btn-accept approve-btn" data-id="${req.id}">Принять</button>
+                        <button class="btn btn-sm btn-decline reject-btn" data-id="${req.id}">Отказать</button>
+                    </div>
+                </div>
+            </div>
+            `;
+        });
+    
+    container.innerHTML = html;
+    
+    // Добавляем обработчики кнопок
+    document.querySelectorAll('.approve-btn').forEach(btn => {
+        btn.addEventListener('click', () => handleRequestAction(btn.dataset.id, 'approve'));
+    });
+    
+    document.querySelectorAll('.reject-btn').forEach(btn => {
+        btn.addEventListener('click', () => handleRequestAction(btn.dataset.id, 'reject'));
+    });
+    }
+
+    // Обработка действий с заявками
+    async function handleRequestAction(requestId, action) {
+        try {
+            const response = await fetch('/api/handle_request', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    request_id: requestId,
+                    action: action
+                })
+            });
+        
+            if (response.ok) {
+                alert(`Заявка #${requestId} ${action === 'approve' ? 'одобрена' : 'отклонена'}`);
+                loadPurchaseRequests(); // Перезагружаем список
+            } else {
+                alert('Ошибка обработки заявки');
+            }
+        } catch (error) {
+            console.error('Ошибка:', error);
+        }
+    }
+
+    // Загружаем заявки при переходе на вкладку
+    document.querySelector('[data-content="requests"]').addEventListener('click', loadPurchaseRequests)
+        </script>   
+    </body>
+    </head>
