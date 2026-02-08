@@ -92,7 +92,23 @@ def main_page():
     elif user['role'] == 'cook':
         return render_template('main_page_cook.html', username=user['username'])
     elif user['role'] == 'admin':
-        return render_template('main_page_admin.html', username=user['username'])
+    # Получаем статистику
+        with sqlite3.connect('cafe.db') as conn:
+            c = conn.cursor()
+            c.execute("SELECT SUM(amount) FROM payments WHERE date = date('now')")
+            income = c.fetchone()[0] or 0
+
+            c.execute("SELECT COUNT(*) FROM meals WHERE date = date('now')")
+            count = c.fetchone()[0] or 0
+        
+        return render_template('main_page_admin.html', 
+                            username=user['username'],
+                            income=income,
+                            count=count,
+                            current_date=date.today())
+    else:
+        return redirect(url_for('login_page'))
+
     else:
         return redirect(url_for('login_page'))
 
@@ -227,6 +243,56 @@ def api_updateBalance():
 
     return redirect(url_for('main_page'))
 
+@app.route('/api/handle_request', methods=['POST'])
+def handle_request():
+    user = get_current_user()
+    if not user or user['role'] != 'admin':
+        return jsonify({"error": "Не авторизован"}), 401
+    
+    data = request.get_json()
+    request_id = data.get('request_id')
+    action = data.get('action')  # 'approve' или 'reject'
+    
+    if not request_id or action not in ['approve', 'reject']:
+        return jsonify({"error": "Неверные данные"}), 400
+    
+    try:
+        from datab import admin
+        admin.manage_request([request_id], action)
+        return jsonify({"status": "success"})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+# -- Получить заявки на покупку --
+@app.route('/api/purchase_requests', methods=['GET'])
+def get_purchase_requests():
+    user = get_current_user()
+    if not user or user['role'] != 'admin':
+        return jsonify({"error": "Не авторизован"}), 401
+
+    with sqlite3.connect('cafe.db') as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT id, cook_id, product_name, quantity, status, created_at 
+            FROM purchase_requests 
+            WHERE status = 'pending'
+            ORDER BY created_at DESC
+        """)
+        
+        requests = []
+        for row in cursor.fetchall():
+            requests.append({
+                "id": row[0],
+                "cook_id": row[1],
+                "product_name": row[2],
+                "quantity": row[3],
+                "status": row[4],
+                "created_at": row[5]
+            })
+    
+    return jsonify(requests)
+
+
 
 # === Выход ===
 @app.route('/logout')
@@ -239,6 +305,7 @@ def logout():
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
+
 
 
 
