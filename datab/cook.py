@@ -84,22 +84,22 @@ def create_purchase_request(cook_name, product, quantity):
                 (cook_id, product, quantity))
         print(f"Заявка на {product} ({quantity}) успешно создана и ждет одобрения админа.")
 
-with sqlite3.connect('cafe.db') as conn:
-    cursor = conn.cursor()
-    cursor.execute(
-        "INSERT INTO menu (meal_type, name, price, allergies, date) VALUES('breakfast', 'Омлет', 150.0, 'eggs', ?)",
-        (date.today(),))
-    cursor.execute(
-        "INSERT INTO menu (meal_type, name, price, allergies, date) VALUES('lunch', 'Суп', 200.0, 'нет', ?)",
-        (date.today(),))
-    cursor.execute(
-        "INSERT INTO menu (meal_type, name, price, allergies, date) VALUES('lunch', 'Котлета с пюре', 200.0, 'нет', ?)",
-        (date.today(),))
-    cursor.execute(
-        "INSERT INTO menu (meal_type, name, price, allergies, date) VALUES('breakfast', 'что то ореховое', 200.0, 'nuts', ?)",
-        (date.today(),))
+# with sqlite3.connect('cafe.db') as conn:
+#     cursor = conn.cursor()
+#     cursor.execute(
+#         "INSERT INTO menu (meal_type, name, price, allergies, date) VALUES('breakfast', 'Омлет', 150.0, 'eggs', ?)",
+#         (date.today(),))
+#     cursor.execute(
+#         "INSERT INTO menu (meal_type, name, price, allergies, date) VALUES('lunch', 'Суп', 200.0, 'нет', ?)",
+#         (date.today(),))
+#     cursor.execute(
+#         "INSERT INTO menu (meal_type, name, price, allergies, date) VALUES('lunch', 'Котлета с пюре', 200.0, 'нет', ?)",
+#         (date.today(),))
+#     cursor.execute(
+#         "INSERT INTO menu (meal_type, name, price, allergies, date) VALUES('breakfast', 'что то ореховое', 200.0, 'nuts', ?)",
+#         (date.today(),))
 
-    cursor.execute("INSERT INTO inventory (product_name, quantity, unit) VALUES ('Омлет', 10.0, 'portion')")
-    cursor.execute("INSERT INTO inventory (product_name, quantity, unit) VALUES ('Суп', 10.0, 'portion')")
-    cursor.execute("INSERT INTO inventory (product_name, quantity, unit) VALUES ('Котлета с пюре', 10.0, 'portion')")
-    cursor.execute("INSERT INTO inventory (product_name, quantity, unit) VALUES ('Котлета с пюре', 10.0, 'portion')")
+#     cursor.execute("INSERT INTO inventory (product_name, quantity, unit) VALUES ('Омлет', 10.0, 'portion')")
+#     cursor.execute("INSERT INTO inventory (product_name, quantity, unit) VALUES ('Суп', 10.0, 'portion')")
+#     cursor.execute("INSERT INTO inventory (product_name, quantity, unit) VALUES ('Котлета с пюре', 10.0, 'portion')")
+#     cursor.execute("INSERT INTO inventory (product_name, quantity, unit) VALUES ('Котлета с пюре', 10.0, 'portion')")

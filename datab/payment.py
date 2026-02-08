@@ -27,7 +27,7 @@ def pay(username, items, payment_type):
 
         # Считаем сумму, пропуская то что нельзя есть
         for item in items:
-            price = item[2]
+            price = item[3]
 
             total_cost += price
 

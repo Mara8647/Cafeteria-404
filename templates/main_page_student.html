@@ -222,7 +222,7 @@
                 <i class="fas fa-utensils"></i> Обед
             </a>
             <a class="nav-link" href="#" data-content="addMoney">
-                <i class="fa-solid fa-wallet"></i> пополнить баланс
+                <i class="fa-solid fa-wallet"></i> Пополнить баланс
             </a>
             <a class="nav-link" href="#" data-content="cart">
                 <i class="fas fa-shopping-cart"></i> Корзина
@@ -373,7 +373,7 @@
 
             const itemsHtml = cart.map((dish, index) => `
                 <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-2">
-                    <span>${dish[1]} — ${dish[2]} ₽</span>
+                    <span>${dish[2]} — ${dish[3]} ₽</span>
                     <button class="btn btn-sm btn-outline-secondary remove-item" data-index="${index}">Удалить</button>
                 </div>
             `).join('');
@@ -403,25 +403,26 @@
                 document.getElementById('breakfast-items').innerHTML = '';
                 document.getElementById('lunch-items').innerHTML = '';
 
-                const breakfastItems = dishes.filter(d => d[0] === 'breakfast');
-                const lunchItems = dishes.filter(d => d[0] === 'lunch');
+                const breakfastItems = dishes.filter(d => d[1] === 'breakfast');
+                const lunchItems = dishes.filter(d => d[1] === 'lunch');
 
                 function createDishCard(dish) {
-                    const allergens = dish[3] === 'none' ? 'нет' : dish[3];
-                    const avgRating = dish[4] || 0;
-                    const reviewCount = dish[5] || 0;
+                    const allergens = dish[4] === 'none' ? 'нет' : dish[4];
+                    const avgRating = dish[5] || 0;
+                    const reviewCount = dish[6] || 0;
                     const fullStars = Math.round(avgRating);
                     const stars = '★'.repeat(fullStars) + '☆'.repeat(5 - fullStars);
 
                     return `
                         <div class="col-md-6 mb-3">
                             <div class="dish-card"
-                                 data-name="${dish[1]}"
-                                 data-price="${dish[2]}"
-                                 data-category="${dish[0]}"
-                                 data-allergy="${dish[3]}">
-                                <h5 class="dish-title">${dish[1]}</h5>
-                                <div class="dish-price">${dish[2]} ₽</div>
+                                 data-menuid="${dish[0]}"
+                                 data-category="${dish[1]}"
+                                 data-name="${dish[2]}"
+                                 data-price="${dish[3]}"
+                                 data-allergy="${dish[4]}">
+                                <h5 class="dish-title">${dish[2]}</h5>
+                                <div class="dish-price">${dish[3]} ₽</div>
                                 <div class="dish-allergy">Аллерген: ${allergens}</div>
                                 <div class="d-flex justify-content-between mt-2">
                                     <button class="btn btn-sm btn-primary add-to-cart">Добавить в корзину</button>
@@ -429,7 +430,7 @@
                                         <div class="rating-stars">${stars}</div>
                                         <small class="text-muted">отзывы</small>
                                         <button class="btn btn-sm btn-outline-secondary ms-2 show-reviews"
-                                                data-dish-name="${dish[1]}">💬</button>
+                                                data-dish-name="${dish[2]}">💬</button>
                                     </div>
                                 </div>
                             </div>
@@ -457,13 +458,14 @@
                 button.onclick = function () {
                     const card = this.closest('.dish-card');
                     const dishArray = [
+                        card.dataset.menuid,
                         card.dataset.category,
                         card.dataset.name,
                         parseFloat(card.dataset.price),
                         card.dataset.allergy || 'none'
                     ];
                     addToCart(dishArray);
-                    alert(`✅ Добавлено: ${dishArray[1]}`);
+                    alert(`✅ Добавлено: ${dishArray[2]}`);
                     renderCart();
                 };
             });
@@ -577,7 +579,7 @@
                     return;
                 }
 
-                const total = cart.reduce((sum, dish) => sum + dish[2], 0);
+                const total = cart.reduce((sum, dish) => sum + dish[3], 0);
                 const orderData = {
                     items: cart,
                     total: total,

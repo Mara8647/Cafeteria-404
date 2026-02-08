@@ -1,9 +1,8 @@
 import sqlite3
 from flask import Flask, request, redirect, render_template, url_for, jsonify, session
-from datab import login, payment, student, dbInitialisation
+from datab import login, payment, student, dbInitialisation, cook
+from datetime import date
 dbInitialisation.init_db()
-from datab import cook
-
 
 app = Flask(__name__, template_folder='./templates')
 app.secret_key = 'cafe_secret_key_2026'  # нужно создать нормальный ключ
@@ -126,7 +125,7 @@ def menu():
 
     enhanced_menu = []
     for item in menu_items:
-        dish_name = item[1]
+        dish_name = item[2]
         with sqlite3.connect('cafe.db') as conn:
             c = conn.cursor()
             c.execute("""
@@ -153,11 +152,16 @@ def create_order():
 
     data = request.get_json()
     items = data.get('items', [])
-    total = data.get('total', 0)
+    total = data.get('total', 3)
     payment_type = data.get('type', '')
 
     with sqlite3.connect('cafe.db') as conn:
         cursor = conn.cursor()
+        for item in items:
+            meal_received = cursor.execute("SELECT EXISTS(SELECT 1 FROM meals WHERE user_id = ? and menu_id = ?)", (user['id'], item[0])).fetchone()[0]
+            if meal_received == 1:
+                return jsonify({"error": "Вы уже получали еду сегодня"}), 403
+        
         balance = cursor.execute("""SELECT user_balance FROM users WHERE id = ?""", (user['id'],)).fetchone()[0]
         new_balance = balance - total
 
@@ -182,8 +186,6 @@ def api_leave_review():
     meal_name = data.get('dish_name')
     rating = data.get('rating')
     comment = data.get('comment', '').strip()
-
-    print(meal_name, rating, comment)
 
     success = student.leave_review(username=user['username'], meal_name=meal_name, rating=rating, comment=comment)
 
@@ -302,7 +304,5 @@ def logout():
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
-
-
 
 

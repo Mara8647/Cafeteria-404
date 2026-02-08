@@ -13,7 +13,7 @@ def view_menu(student_allergie):
     print(student_allergie)
     with sqlite3.connect('cafe.db') as conn:
         c = conn.cursor()
-        c.execute("SELECT meal_type, name, price, allergies FROM menu WHERE date = ?", (current_date,))
+        c.execute("SELECT id, meal_type, name, price, allergies FROM menu WHERE date = ?", (current_date,))
         items = c.fetchall()
 
     if student_allergie and student_allergie != "none":
@@ -21,7 +21,7 @@ def view_menu(student_allergie):
 
         filtered_items = []
         for item in items:
-            meal_type, name, price, allergies = item
+            allergies = item[4]
 
             if allergies == 'none':
                 filtered_items.append(item)
@@ -74,7 +74,7 @@ def receive_meal(username, items):
             return
 
         for item in items:
-            dish_name = item[1]
+            dish_name = item[2]
             c.execute("SELECT quantity FROM inventory WHERE product_name = ?", (dish_name,))
             inventory_res = c.fetchone()
             if not inventory_res or inventory_res[0] < 1:
@@ -85,10 +85,9 @@ def receive_meal(username, items):
                 c.execute("INSERT INTO meals (user_id, menu_id, amount_received, date) VALUES (?, ?, 1, ?)",
                           (user_id, item[0], current_date))
                 conn.commit()
-            except sqlite3.IntegrityError:
+            except sqlite3.IntegrityError as e:
                 c.execute("UPDATE inventory SET quantity = quantity + 1 WHERE product_name = ?", (dish_name,))
                 conn.commit()
 
 if __name__ == "__main__":
     pass
-
