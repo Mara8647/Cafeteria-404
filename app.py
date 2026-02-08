@@ -109,9 +109,6 @@ def main_page():
     else:
         return redirect(url_for('login_page'))
 
-    else:
-        return redirect(url_for('login_page'))
-
 
 # === API: Получить меню для текущего пользователя ===
 @app.route('/api/menu', methods=['GET'])
