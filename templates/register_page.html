@@ -4,34 +4,20 @@
 
 <form action="{{ url_for('register_page') }}" method="POST" id="mainForm">
 
-    <!-- Скрытое поле для роли -->
-    <input type="hidden" name="role" id="selectedRoleField" >
-
-    <!-- Шаг 1: выбор роли -->
-    <div id="step1">
-        <select class="form-select" id="inputRole" required>
-            <option value="">Выберите роль</option>
-            <option value="student">Ученик</option>
-            <option value="cook">Повар</option>
-            <option value="admin">Администратор</option>
-        </select>
-        <button type="button" id="nextButton" class="btn btn-primary mt-2">Далее</button>
-    </div>
-
     <!-- Шаг 2: общие поля + аллергены -->
-    <div id="commonFields" style="display: none;">
+    <div id="commonFields">
         <h3 id="formTitle">Регистрация</h3>
 
         <!-- Общие поля (имя, email и т.д.) -->
         <input type="text" name="name" placeholder="Например: Иван Иванович" class="form-control mb-2" required>
-        <input type="email" name="email" placeholder="Например: example@gmail.com" class="form-control mb-2" required>
+        <input type="email" name="email" placeholder="Например: exemple@gmail.com" class="form-control mb-2" required>
         <input type="password" name="password" placeholder="Например: 123_Abc456" class="form-control mb-2" required>
 
-        <!-- Поле аллергенов (показывается только для student) -->
-        <div id="allergensField" style="display: none;" class="mb-3">
+        <!-- Поле аллергенов -->
+        <div id="allergensField" class="mb-3">
             <label class="form-label">Аллергии</label>
             <div id="allergyCheckboxes" class="d-flex flex-wrap gap-2 p-2 border rounded"></div>
-            <input type="hidden" name="allergens" id="allergensInput">
+            <input type="hidden" name="allergens" id="allergensInput" value="none">
         </div>
 
         <button type="submit" class="btn btn-success">Зарегистрироваться</button>
@@ -41,16 +27,12 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const roleSelect = document.getElementById('inputRole');
-    const nextButton = document.getElementById('nextButton');
-    const backButton = document.getElementById('backButton');
-    const step1Div = document.getElementById('step1');
     const commonFieldsDiv = document.getElementById('commonFields');
     const allergensField = document.getElementById('allergensField');
     const formTitle = document.getElementById('formTitle');
-    const selectedRoleField = document.getElementById('selectedRoleField');
     const allergensContainer = document.getElementById('allergyCheckboxes');
-    const allergensInput = document.getElementById('allergensInput'); // скрытое поле для отправки
+    const allergensInput = document.getElementById('allergensInput');
+    const backButton = document.getElementById('backButton');
 
     // Список аллергенов
     const allergensList = [
@@ -60,11 +42,10 @@ document.addEventListener('DOMContentLoaded', function() {
         { value: 'fish', label: 'Рыба' },
         { value: 'soy', label: 'Соя' },
         { value: 'crustaceans', label: 'Ракообразные' },
-        { value: 'wheat', label: 'Пшеница' },
-        { value: 'peanut', label: 'Арахис' }
+        { value: 'wheat', label: 'Пшеница' }
     ];
 
-    // Функция для инициализации кнопок аллергенов (вызывается один раз)
+    // Функция для инициализации кнопок аллергенов
     function initAllergenButtons() {
         if (allergensContainer.children.length > 0) return; // уже инициализировано
 
@@ -87,55 +68,33 @@ document.addEventListener('DOMContentLoaded', function() {
                     btn.classList.remove('btn-outline-secondary');
                     btn.classList.add('btn-primary');
                 }
-                allergensInput.value = Array.from(selected).join(',');
+                allergensInput.value = selected.size > 0 ? Array.from(selected).join(',') : 'none';
             });
 
             allergensContainer.appendChild(btn);
         });
     }
 
-    nextButton.addEventListener('click', function() {
-        const selectedRole = roleSelect.value;
+    // ВЫЗЫВАЕМ ФУНКЦИЮ ПРИ ЗАГРУЗКЕ!
+    initAllergenButtons();
 
-        if (!selectedRole) {
-            alert('Пожалуйста, выберите роль');
-            return;
-        }
+    // Обработчик кнопки "Назад"
+    if (backButton) {
+        backButton.addEventListener('click', function() {
+            const step1Div = document.getElementById('step1');
+            if (step1Div) {
+                step1Div.style.display = 'block';
+                commonFieldsDiv.style.display = 'none';
+                allergensInput.value = 'none';
 
-        // Сохраняем роль
-        selectedRoleField.value = selectedRole;
-
-        // Обновляем заголовок
-        formTitle.textContent = 'Регистрация ' +
-            (selectedRole === 'cook' ? 'повара' :
-             selectedRole === 'student' ? 'ученика' : 'администратора');
-
-        // Показываем/скрываем аллергены
-        if (selectedRole === 'student') {
-            allergensField.style.display = 'block';
-            initAllergenButtons(); // создаём кнопки при первом показе
-        } else {
-            allergensField.style.display = 'none';
-            allergensInput.value = ''; // сбрасываем, если не студент
-        }
-
-        // Переключаем шаг
-        step1Div.style.display = 'none';
-        commonFieldsDiv.style.display = 'block';
-    });
-
-    backButton.addEventListener('click', function() {
-        step1Div.style.display = 'block';
-        commonFieldsDiv.style.display = 'none';
-        selectedRoleField.value = '';
-        allergensInput.value = ''; // сброс аллергенов
-
-        // Опционально: сбросить визуальное состояние кнопок
-        document.querySelectorAll('#allergyCheckboxes .btn').forEach(btn => {
-            btn.classList.remove('btn-primary');
-            btn.classList.add('btn-outline-secondary');
+                // Сбросить все кнопки аллергенов
+                document.querySelectorAll('#allergyCheckboxes .btn').forEach(btn => {
+                    btn.classList.remove('btn-primary');
+                    btn.classList.add('btn-outline-secondary');
+                });
+            }
         });
-    });
+    }
 });
 </script>
 

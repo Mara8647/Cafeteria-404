@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Личный кабинет повара</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #4e73df;
+            --secondary-color: #858796;
+            --success-color: #1cc88a;
+            --info-color: #36b9cc;
+            --warning-color: #f6c23e;
+            --danger-color: #e74a3b;
+        }
+
+        body {
+            background-color: #f8f9fc;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .sidebar {
+            min-height: 100vh;
+            background: linear-gradient(180deg, var(--primary-color) 0%, #224abe 100%);
+            color: white;
+            position: fixed;
+            width: 250px;
+            transition: all 0.3s;
+            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+            z-index: 1000;
+        }
+
+        .sidebar .user-info {
+            padding: 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
+        }
+
+        .sidebar .user-info .avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background-color: white;
+            color: var(--primary-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+            font-size: 2rem;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .sidebar .nav {
+            padding: 1rem 0;
+        }
+
+        .sidebar .nav-link {
+            color: rgba(255, 255, 255, 0.8);
+            padding: 0.75rem 1.5rem;
+            margin: 0.2rem 0;
+            border-left: 3px solid transparent;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+        }
+
+        .sidebar .nav-link:hover, .sidebar .nav-link.active {
+            color: white;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-left-color: white;
+            text-decoration: none;
+        }
+
+        .sidebar .nav-link i {
+            width: 20px;
+            margin-right: 10px;
+            text-align: center;
+        }
+
+        .main-content {
+            margin-left: 250px;
+            padding: 20px;
+            min-height: 100vh;
+            transition: all 0.3s;
+        }
+
+        .content-card {
+            background-color: white;
+            border-radius: 0.35rem;
+            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+            margin-bottom: 1.5rem;
+            padding: 1.5rem;
+        }
+
+        .page-title {
+            color: #5a5c69;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            font-size: 1.75rem;
+        }
+
+        .menu-toggle {
+            display: none;
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            z-index: 1100;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                margin-left: -250px;
+            }
+            .sidebar.show {
+                margin-left: 0;
+            }
+            .main-content {
+                margin-left: 0;
+            }
+            .menu-toggle {
+                display: block;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Кнопка меню для мобильных -->
+    <button class="btn btn-primary menu-toggle" id="menuToggle">
+        <i class="fas fa-bars"></i>
+    </button>
+
+    <!-- Боковое меню -->
+    <div class="sidebar" id="sidebar">
+        <div class="user-info">
+            <div class="avatar">
+                <i class="fas fa-user"></i>
+            </div>
+            <h5 class="mb-1">{{ username }}</h5>
+            <p class="mb-0 text-light">повар</p>
+        </div>
+        <nav class="nav flex-column">
+            <a class="nav-link active" href="#" data-content="orders">
+                <i class="fas fa-clipboard-list"></i>
+                <span>Заказы</span>
+            </a>
+            <a class="nav-link" href="#" data-content="issued">
+                <i class="fas fa-check-circle"></i>
+                <span>Выданные</span>
+            </a>
+            <a class="nav-link" href="#" data-content="inventory">
+                <i class="fas fa-boxes"></i>
+                <span>Склад</span>
+            </a>
+            <a class="nav-link" href="#" data-content="updateInventory">
+                <i class="fas fa-sync-alt"></i>
+                <span>Обновить склад</span>
+            </a>
+            <a class="nav-link" href="#" data-content="purchaseRequests">
+                <i class="fas fa-shopping-cart"></i>
+                <span>Заявки на закупку</span>
+            </a>
+            <a href="/logout" class="btn btn-outline-danger mt-3 mx-3">Выйти</a>
+        </nav>
+    </div>
+
+    <!-- Основной контент -->
+    <div class="main-content" id="mainContent">
+        <div id="contentContainer">
+            <!-- Заказы -->
+            <div class="content-section" id="orders" style="display: block;">
+                <h2 class="page-title">Заказы</h2>
+                <div class="content-card">
+                    <button class="btn btn-success mb-3" onclick="loadOrders()">
+                        <i class="fas fa-sync-alt"></i> Обновить список
+                    </button>
+                    <div id="orders-list">
+                        <p>Загрузка...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Выданные -->
+            <div class="content-section" id="issued" style="display: none;">
+                <h2 class="page-title">Выданные блюда</h2>
+                <div class="content-card">
+                    <div id="issued-list">
+                        <p>Загрузка...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Склад -->
+            <div class="content-section" id="inventory" style="display: none;">
+                <h2 class="page-title">Склад</h2>
+                <div class="content-card">
+                    <div id="inventory-list">
+                        <p>Загрузка...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Обновить склад -->
+            <div class="content-section" id="updateInventory" style="display: none;">
+                <h2 class="page-title">Обновить склад</h2>
+                <div class="content-card">
+                    <form id="updateInventoryForm">
+                        <div class="mb-3">
+                            <label for="productName" class="form-label">Название продукта</label>
+                            <input type="text" class="form-control" id="productName" placeholder="Например: Омлет" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="quantityChange" class="form-label">Изменение количества (положительное — добавить, отрицательное — списать)</label>
+                            <input type="number" class="form-control" id="quantityChange" placeholder="Например: -1" required>
+                        </div>
+                        <button type="submit" class="btn btn-success">Обновить</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Заявки на закупку -->
+            <div class="content-section" id="purchaseRequests" style="display: none;">
+                <h2 class="page-title">Заявки на закупку</h2>
+                <div class="content-card">
+                    <form id="purchaseRequestForm">
+                        <div class="mb-3">
+                            <label for="requestProduct" class="form-label">Название продукта</label>
+                            <input type="text" class="form-control" id="requestProduct" placeholder="Например: Молоко" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="requestQuantity" class="form-label">Количество</label>
+                            <input type="number" class="form-control" id="requestQuantity" placeholder="Например: 10" required>
+                        </div>
+                        <button type="submit" class="btn btn-success">Создать заявку</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // === НАВИГАЦИЯ ===
+    document.querySelectorAll('.nav-link[data-content]').forEach(link => {
+        link.addEventListener('click', function (e) {
+            e.preventDefault();
+            document.querySelectorAll('.nav-link').forEach(el => el.classList.remove('active'));
+            this.classList.add('active');
+
+            document.querySelectorAll('.content-section').forEach(sec => sec.style.display = 'none');
+
+            const targetId = this.getAttribute('data-content');
+            const target = document.getElementById(targetId);
+            if (target) {
+                target.style.display = 'block';
+
+                // Загрузка данных при открытии вкладки
+                if (targetId === 'orders') loadOrders();
+                if (targetId === 'issued') loadIssued();
+                if (targetId === 'inventory') loadInventory();
+            }
+        });
+    });
+
+        // === ЗАГРУЗКА ЗАКАЗОВ ===
+        async function loadOrders() {
+            const container = document.getElementById('orders-list');
+            container.innerHTML = '<p>Загрузка...</p>';
+
+            try {
+                const response = await fetch('/api/cook/orders');
+                const orders = await response.json();
+
+                if (orders.length === 0) {
+                    container.innerHTML = '<p>Нет оплаченных, но не выданных блюд.</p>';
+                    return;
+                }
+
+                const html = orders.map(o => `
+                    <p>
+                        Студент <strong>${o.student}</strong> оплатил, но не получил: <strong>${o.dish}</strong>
+                        <button class="btn btn-sm btn-success ms-2"
+                                onclick="markDelivered('${o.student}', ${o.menu_id})">
+                            Отметить как выдано
+                        </button>
+                    </p>
+                `).join('');
+
+                container.innerHTML = html;
+            } catch (e) {
+                container.innerHTML = '<p class="text-danger">Ошибка загрузки.</p>';
+            }
+        }
+
+        // === ОТМЕТИТЬ ВЫДАННЫМ ===
+        async function markDelivered(username, menuId) {
+            try {
+                const response = await fetch('/api/cook/mark_delivered', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        username: username,
+                        menu_id: menuId
+                    })
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    alert(result.message || `Блюдо выдано студенту ${username}`);
+                    loadOrders(); // Обновить список
+
+                    // Если открыта вкладка "Выданные", обновить её
+                    if (document.querySelector('.nav-link.active')?.dataset.content === 'issued') {
+                        loadIssued();
+                    }
+                } else {
+                    const err = await response.json();
+                    alert('Ошибка: ' + err.error);
+                }
+            } catch (e) {
+                alert('Ошибка сети');
+                console.error(e);
+            }
+        }
+
+        // === ЗАГРУЗКА ВЫДАННЫХ ===
+        async function loadIssued() {
+            const container = document.getElementById('issued-list');
+            container.innerHTML = '<p>Загрузка...</p>';
+
+            try {
+                const response = await fetch('/api/cook/issued');
+                const issued = await response.json();
+
+                if (issued.length === 0) {
+                    container.innerHTML = '<p>Пока что не было выдано ни одной порции.</p>';
+                    return;
+                }
+
+                const html = issued.map(i => `<p>Студент <strong>${i.student}</strong> получил <strong>${i.dish}</strong></p>`).join('');
+                container.innerHTML = html;
+            } catch (e) {
+                container.innerHTML = '<p class="text-danger">Ошибка загрузки.</p>';
+            }
+        }
+
+        // === ЗАГРУЗКА СКЛАДА ===
+        async function loadInventory() {
+            const container = document.getElementById('inventory-list');
+            container.innerHTML = '<p>Загрузка...</p>';
+
+            try {
+                const response = await fetch('/api/cook/inventory');
+                const items = await response.json();
+
+                if (items.length === 0) {
+                    container.innerHTML = '<p>Склад пуст.</p>';
+                    return;
+                }
+
+                const html = items.map(i => `<p>${i.product}: <strong>${i.quantity} ${i.unit}</strong></p>`).join('');
+                container.innerHTML = html;
+            } catch (e) {
+                container.innerHTML = '<p class="text-danger">Ошибка загрузки.</p>';
+            }
+        }
+
+        // === ОБНОВЛЕНИЕ СКЛАДА ===
+        document.getElementById('updateInventoryForm')?.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const product = document.getElementById('productName').value;
+            const change = parseInt(document.getElementById('quantityChange').value);
+
+            if (isNaN(change)) {
+                alert('Введите корректное число');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/cook/update_inventory', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ product, change })
+                });
+
+                if (response.ok) {
+                    alert('Склад обновлён');
+                    document.getElementById('updateInventoryForm').reset();
+                    loadInventory(); // Обновить список
+                } else {
+                    const err = await response.json();
+                    alert('Ошибка: ' + err.error);
+                }
+            } catch (e) {
+                alert('Ошибка сети');
+            }
+        });
+
+        // === ЗАЯВКА НА ЗАКУПКУ ===
+        document.getElementById('purchaseRequestForm')?.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const product = document.getElementById('requestProduct').value;
+            const quantity = parseInt(document.getElementById('requestQuantity').value);
+
+            if (isNaN(quantity) || quantity <= 0) {
+                alert('Введите корректное количество');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/cook/create_purchase_request', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ product, quantity })
+                });
+
+                if (response.ok) {
+                    alert('Заявка создана');
+                    document.getElementById('purchaseRequestForm').reset();
+                } else {
+                    const err = await response.json();
+                    alert('Ошибка: ' + err.error);
+                }
+            } catch (e) {
+                alert('Ошибка сети');
+            }
+        });
+
+        // Загрузка заказов при старте
+        window.onload = function() {
+            loadOrders();
+        };
+    </script>
+</body>
+</html>

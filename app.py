@@ -1,11 +1,16 @@
 import sqlite3
+import os
 from flask import Flask, request, redirect, render_template, url_for, jsonify, session
-from datab import login, payment, student, dbInitialisation, cook
-from datetime import date
+from datab import login, payment, student, dbInitialisation, admin
+from datab.cook import check_inventory,create_purchase_request, update_inventory, view_orders, mark_meal_delivered
+import datetime
+
 dbInitialisation.init_db()
 
+current_date = datetime.date.today().isoformat()
+
 app = Flask(__name__, template_folder='./templates')
-app.secret_key = 'cafe_secret_key_2026'  # нужно создать нормальный ключ
+app.secret_key = 'secret_pipec_key_123412'
 
 
 
@@ -58,16 +63,14 @@ def register_page():
         password = request.form.get('password', '')
         allergies = request.form.get('allergens', '') or 'none'
 
+        login.registration(username, email, password, role, allergies)
 
         with sqlite3.connect('cafe.db') as conn:
             cursor = conn.cursor()
-
-            login.registration(username, email, password, role, allergies)
-
-            user_id = cursor.lastrowid
+            cursor.execute("SELECT id FROM users WHERE username = ?", (username,))
+            user_id = cursor.fetchone()[0]
 
         session['user_id'] = user_id
-
         return redirect(url_for('main_page'))
 
     return render_template('register_page.html')
@@ -82,29 +85,39 @@ def main_page():
 
     with sqlite3.connect('cafe.db') as conn:
         cursor = conn.cursor()
-        balance = str(cursor.execute("""SELECT user_balance FROM users WHERE id = ?""", (user['id'],)).fetchone())
-        balance = balance[1:len(balance)-2]
-        print(balance)
+        balance_row = cursor.execute("SELECT user_balance FROM users WHERE id = ?", (user['id'],)).fetchone()
+        balance = balance_row[0] if balance_row else 0
 
     if user['role'] == 'student':
         return render_template('main_page_student.html', username=user['username'], balance=balance)
     elif user['role'] == 'cook':
         return render_template('main_page_cook.html', username=user['username'])
     elif user['role'] == 'admin':
-    # Получаем статистику
+    # Подключаемся к базе данных
         with sqlite3.connect('cafe.db') as conn:
-            c = conn.cursor()
-            c.execute("SELECT SUM(amount) FROM payments WHERE date = date('now')")
-            income = c.fetchone()[0] or 0
-
-            c.execute("SELECT COUNT(*) FROM meals WHERE date = date('now')")
-            count = c.fetchone()[0] or 0
+            cursor = conn.cursor()
         
+            # Получаем статистику на сегодня 
+            cursor.execute("SELECT SUM(amount) FROM payments WHERE date = date('now')")
+            income_result = cursor.fetchone()
+            income = income_result[0] if income_result[0] else 0.0
+        
+            cursor.execute("SELECT COUNT(*) FROM meals WHERE date = date('now')")
+            count_result = cursor.fetchone()
+            count = count_result[0] if count_result[0] else 0
+        
+            # Получаем количество pending заявок
+            cursor.execute("SELECT COUNT(*) FROM purchase_requests WHERE status = 'pending'")
+            pending_result = cursor.fetchone()
+            pending_count = pending_result[0] if pending_result[0] else 0 
+    
+        # Передаем все данные в шаблон
         return render_template('main_page_admin.html', 
-                            username=user['username'],
-                            income=income,
-                            count=count,
-                            current_date=date.today())
+                                username=user['username'],
+                                income=income,
+                                count=count,
+                                pending_count=pending_count,  # ← НОВАЯ ПЕРЕМЕННАЯ
+                                current_date=current_date)
     else:
         return redirect(url_for('login_page'))
 
@@ -152,35 +165,32 @@ def create_order():
 
     data = request.get_json()
     items = data.get('items', [])
-    total = data.get('total', 3)
+    total = data.get('total', 0)
     payment_type = data.get('type', '')
 
     with sqlite3.connect('cafe.db') as conn:
         cursor = conn.cursor()
-        for item in items:
-            meal_received = cursor.execute("SELECT EXISTS(SELECT 1 FROM meals WHERE user_id = ? and menu_id = ?)", (user['id'], item[0])).fetchone()[0]
-            if meal_received == 1:
-                return jsonify({"error": "Вы уже получали еду сегодня"}), 403
-        
-        balance = cursor.execute("""SELECT user_balance FROM users WHERE id = ?""", (user['id'],)).fetchone()[0]
-        new_balance = balance - total
+        balance = cursor.execute("SELECT user_balance FROM users WHERE id = ?", (user['id'],)).fetchone()[0]
 
     # Сохраняем заказ и оплату
     status = payment.pay(user['username'], items, payment_type)
-    student.receive_meal(user['username'], items)
-    print(status)
 
-    return jsonify({
-        "new_balance": new_balance,
-        "status": status,
-        "total": total
-    })
+    if status == True or "Успешно" in str(status):
+        return jsonify({
+            "new_balance": balance - total,
+            "status": "Оплата прошла успешно",
+            "total": total
+        })
+    else:
+        return jsonify({"error": status}), 400
 
 
 # === API: Оставить отзыв ===
 @app.route('/api/review', methods=['POST'])
 def api_leave_review():
     user = get_current_user()
+    if not user:
+        return jsonify({"error": "Не авторизован"}), 401
 
     data = request.get_json()
     meal_name = data.get('dish_name')
@@ -256,7 +266,6 @@ def handle_request():
         return jsonify({"error": "Неверные данные"}), 400
     
     try:
-        from datab import admin
         admin.manage_request([request_id], action)
         return jsonify({"status": "success"})
     except Exception as e:
@@ -291,7 +300,181 @@ def get_purchase_requests():
     
     return jsonify(requests)
 
+# -- Статистика за неделю (для графика) --
+@app.route('/api/weekly_stats', methods=['GET'])
+def get_weekly_stats():
+    user = get_current_user()
+    if not user or user['role'] != 'admin':
+        return jsonify({"error": "Не авторизован"}), 401
+    
+    with sqlite3.connect('cafe.db') as conn:
+        cursor = conn.cursor()
+        
+        # Получаем статистику за последние 7 дней
+        cursor.execute("""
+            SELECT 
+                date,
+                COALESCE(SUM(amount), 0) as daily_income,
+                COALESCE((SELECT COUNT(*) FROM meals WHERE date = payments.date), 0) as daily_meals
+            FROM payments 
+            WHERE date >= date('now', '-6 days')
+            GROUP BY date
+            ORDER BY date
+        """)
+        
+        # Получаем все данные сразу
+        db_data = cursor.fetchall()
+        
+        # Создаем словарь для быстрого поиска по дате
+        db_dict = {}
+        for row in db_data:
+            db_dict[row[0]] = {
+                "income": float(row[1]),
+                "meals": row[2]
+            }
+        
+        # Создаем структуру для всех дней недели
+        weekly_data = []
+        import datetime
+        
+        # Генерируем даты за последние 7 дней
+        today = datetime.date.today()
+        for i in range(6, -1, -1):  # от 6 дней назад до сегодня
+            day = today - datetime.timedelta(days=i)
+            day_str = day.isoformat()
+            
+            # Получаем данные для этого дня или используем нули
+            if day_str in db_dict:
+                day_data = {
+                    "date": day_str,
+                    "income": db_dict[day_str]["income"],
+                    "meals": db_dict[day_str]["meals"]
+                }
+            else:
+                day_data = {
+                    "date": day_str,
+                    "income": 0.0,
+                    "meals": 0
+                }
+            
+            # Добавляем название дня недели
+            day_names = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"]
+            day_data["day_name"] = day_names[day.weekday()]
+            
+            weekly_data.append(day_data)
+    
+    return jsonify(weekly_data)
 
+# === API для повара ===
+
+@app.route('/api/cook/orders', methods=['GET'])
+def api_view_orders():
+    user = get_current_user()
+    if not user or user['role'] != 'cook':
+        return jsonify({"error": "Доступ запрещён"}), 403
+
+    meals = view_orders()
+
+    orders = [{"student": m[0], "dish": m[1], "menu_id": m[2]} for m in meals]
+    return jsonify(orders)
+
+
+@app.route('/api/cook/inventory', methods=['GET'])
+def api_check_inventory():
+    user = get_current_user()
+    if not user or user['role'] != 'cook':
+        return jsonify({"error": "Доступ запрещён"}), 403
+
+    items = check_inventory()
+
+    inventory = [{"product": i[0], "quantity": i[1], "unit": i[2] or "шт"} for i in items]
+    return jsonify(inventory)
+
+
+@app.route('/api/cook/update_inventory', methods=['POST'])
+def api_update_inventory():
+    """Обновить склад"""
+    user = get_current_user()
+    if not user or user['role'] != 'cook':
+        return jsonify({"error": "Доступ запрещён"}), 403
+
+    data = request.get_json()
+    product = data.get('product')
+    change = data.get('change')
+
+    if not product or change is None:
+        return jsonify({"error": "Неверные данные"}), 400
+
+    try:
+        message = update_inventory(product, change)
+        return jsonify({"status": "ok", "message": message})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/api/cook/create_purchase_request', methods=['POST'])
+def api_create_purchase_request():
+    """Создать заявку на закупку"""
+    user = get_current_user()
+    if not user or user['role'] != 'cook':
+        return jsonify({"error": "Доступ запрещён"}), 403
+
+    data = request.get_json()
+    product = data.get('product')
+    quantity = data.get('quantity')
+
+    if not product or not quantity or quantity <= 0:
+        return jsonify({"error": "Неверные данные"}), 400
+
+    try:
+        message = create_purchase_request(user['username'], product, quantity)
+        return jsonify({"status": "ok", "message": message})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/api/cook/issued', methods=['GET'])
+def api_view_issued():
+    """Получить выданные блюда"""
+    user = get_current_user()
+    if not user or user['role'] != 'cook':
+        return jsonify({"error": "Доступ запрещён"}), 403
+
+    with sqlite3.connect('cafe.db') as conn:
+        c = conn.cursor()
+        c.execute('''
+            SELECT u.username, m.name
+            FROM meals ml
+            JOIN users u ON ml.user_id = u.id
+            JOIN menu m ON ml.menu_id = m.id
+            WHERE ml.date = ?
+            ORDER BY u.username, m.name
+        ''', (current_date,))
+        meals = c.fetchall()
+
+    issued = [{"student": m[0], "dish": m[1]} for m in meals]
+    return jsonify(issued)
+
+
+@app.route('/api/cook/mark_delivered', methods=['POST'])
+def api_mark_delivered():
+    user = get_current_user()
+    if not user or user['role'] != 'cook':
+        return jsonify({"error": "Доступ запрещён"}), 403
+
+    data = request.get_json()
+    username = data.get('username')
+    menu_id = data.get('menu_id')
+    print(f"Получены данные: username={username}, menu_id={menu_id}")
+
+    if not username or not menu_id:
+        return jsonify({"error": "Неверные данные: укажите username и menu_id"}), 400
+
+    try:
+        mark_meal_delivered(username, int(menu_id))  # Приводим к int
+        return jsonify({"status": "ok", "message": f"Блюдо выдано студенту {username}"})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 # === Выход ===
 @app.route('/logout')

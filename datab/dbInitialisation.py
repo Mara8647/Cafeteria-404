@@ -1,4 +1,5 @@
 import sqlite3
+import os
 
 def init_db():
     # Подключаемся к базе (если файла нет, он создастся)
@@ -39,6 +40,7 @@ def init_db():
             amount REAL NOT NULL,
             payment_type TEXT NOT NULL,
             date TEXT NOT NULL DEFAULT CURRENT_DATE,
+            menu_items TEXT DEFAULT '[]',
             FOREIGN KEY(user_id) REFERENCES users(id)
         )
     ''')
@@ -92,6 +94,14 @@ def init_db():
             created_at TEXT NOT NULL DEFAULT CURRENT_DATE
         )
     ''')
+
+    admin_created = c.execute("SELECT EXISTS(SELECT 1 FROM users WHERE role = 'admin')").fetchone()[0]
+    if admin_created == 0:
+        c.execute("INSERT INTO users (username, email, password, user_balance, role, allergies) VALUES ('ServerAdministrator', ?, ?, 0.0, 'admin', 'none')", (os.getenv("ADMIN_EMAIL"), os.getenv("ADMIN_PASSWORD")))
+    
+    cook_created = c.execute("SELECT EXISTS(SELECT 1 FROM users WHERE role = 'cook')").fetchone()[0]
+    if cook_created == 0:
+        c.execute("INSERT INTO users (username, email, password, user_balance, role, allergies) VALUES ('Cook', ?, ?, 0.0, 'cook', 'none')", (os.getenv("COOK_EMAIL"), os.getenv("COOK_PASSWORD")))
 
     conn.commit()
     conn.close()

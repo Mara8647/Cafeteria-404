@@ -6,4 +6,10 @@ services:
     volumes:
       - ./cafe.db:/app/cafe.db
     ports:
-      - 80:5000
+      - 50:5000
+    environment:
+      APP_KEY: 'app_key' # Ключ для работы сервера
+      ADMIN_PASSWORD: 'admin_passwd' # Пароль для администратора
+      ADMIN_EMAIL: 'admin@gmail.com'
+      COOK_PASSWORD: 'cook_passwd'
+      COOK_EMAIL: 'cook@gmail.com'
