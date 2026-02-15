@@ -16,6 +16,7 @@ current_date = date.today()
 def pay(username, items, payment_type):
     with sqlite3.connect('cafe.db') as conn:
         c = conn.cursor()
+        print(f"Пользователь {username} пытается оплатить {items}")
 
         # Данные пользователя
         c.execute("SELECT id, user_balance FROM users WHERE username = ?", (username,))
@@ -28,10 +29,9 @@ def pay(username, items, payment_type):
         user_id, balance = user_data
         total_cost = 0.0
 
-        # Собираем список оплаченных блюд для сохранения
+        # Собираем список оплаченных блюд
         paid_dishes = []
         for item in items:
-            # Структура item: [menu_id, meal_type, name, price, allergies] или [name, price, ...]
             dish_name = item[2]
             price = item[3]
 
@@ -42,6 +42,13 @@ def pay(username, items, payment_type):
             menu_res = c.fetchone()
             menu_id = menu_res[0] if menu_res else None
 
+            c.execute("SELECT quantity FROM inventory WHERE product_name = ?", (dish_name,))
+            inventory_res = c.fetchone()
+            c.execute("UPDATE inventory SET quantity = quantity - 1 WHERE product_name = ?", (dish_name,))
+
+            if not inventory_res or inventory_res[0] < 1:
+                return f"ОШИБКА: Недостаточно продуктов для {dish_name}!"
+
             paid_dishes.append({
                 "name": dish_name,
                 "price": price,
@@ -49,8 +56,8 @@ def pay(username, items, payment_type):
             })
 
         # Сохраняем список блюд как JSON
+        print(paid_dishes)
         menu_items_json = json.dumps(paid_dishes)
-        print(menu_items_json)
 
         if payment_type == 'subscription':
             # Если абонемент - списываем 0, но фиксируем факт

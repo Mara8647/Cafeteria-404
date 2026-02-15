@@ -2,15 +2,16 @@ import sqlite3
 import os
 from flask import Flask, request, redirect, render_template, url_for, jsonify, session
 from datab import login, payment, student, dbInitialisation, admin
-from datab.cook import check_inventory,create_purchase_request, update_inventory, view_orders, mark_meal_delivered
+from datab.cook import check_inventory,create_purchase_request, update_inventory, view_orders, mark_meal_delivered, init_test_data
 import datetime
 
 dbInitialisation.init_db()
+init_test_data()
 
 current_date = datetime.date.today().isoformat()
 
 app = Flask(__name__, template_folder='./templates')
-app.secret_key = 'secret_pipec_key_123412'
+app.secret_key = 'secret_key_123412'
 
 
 
@@ -172,7 +173,7 @@ def create_order():
         cursor = conn.cursor()
         balance = cursor.execute("SELECT user_balance FROM users WHERE id = ?", (user['id'],)).fetchone()[0]
 
-    # Сохраняем заказ и оплату
+    # Сохраняем заказ и оплату а так же списываем продукты со склада
     status = payment.pay(user['username'], items, payment_type)
 
     if status == True or "Успешно" in str(status):
@@ -266,7 +267,7 @@ def handle_request():
         return jsonify({"error": "Неверные данные"}), 400
     
     try:
-        admin.manage_request([request_id], action)
+        admin.manage_request(request_id, action)
         return jsonify({"status": "success"})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -281,7 +282,7 @@ def get_purchase_requests():
     with sqlite3.connect('cafe.db') as conn:
         cursor = conn.cursor()
         cursor.execute("""
-            SELECT id, cook_id, product_name, quantity, status, created_at 
+            SELECT id, cook_id, product_name, quantity, unit, status, created_at 
             FROM purchase_requests 
             WHERE status = 'pending'
             ORDER BY created_at DESC
@@ -294,8 +295,9 @@ def get_purchase_requests():
                 "cook_id": row[1],
                 "product_name": row[2],
                 "quantity": row[3],
-                "status": row[4],
-                "created_at": row[5]
+                "unit" : row[4],
+                "status": row[5],
+                "created_at": row[6]
             })
     
     return jsonify(requests)
@@ -387,7 +389,7 @@ def api_check_inventory():
 
     items = check_inventory()
 
-    inventory = [{"product": i[0], "quantity": i[1], "unit": i[2] or "шт"} for i in items]
+    inventory = [{"product": i[0], "quantity": i[1], "unit": i[2] or "порц."} for i in items]
     return jsonify(inventory)
 
 
@@ -401,12 +403,13 @@ def api_update_inventory():
     data = request.get_json()
     product = data.get('product')
     change = data.get('change')
+    unit = data.get('unit')
 
     if not product or change is None:
         return jsonify({"error": "Неверные данные"}), 400
 
     try:
-        message = update_inventory(product, change)
+        message = update_inventory(product, change, unit)
         return jsonify({"status": "ok", "message": message})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -422,12 +425,13 @@ def api_create_purchase_request():
     data = request.get_json()
     product = data.get('product')
     quantity = data.get('quantity')
+    unit = data.get('unit')
 
     if not product or not quantity or quantity <= 0:
         return jsonify({"error": "Неверные данные"}), 400
 
     try:
-        message = create_purchase_request(user['username'], product, quantity)
+        message = create_purchase_request(user['username'], product, quantity, unit)
         return jsonify({"status": "ok", "message": message})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -472,6 +476,7 @@ def api_mark_delivered():
 
     try:
         mark_meal_delivered(username, int(menu_id))  # Приводим к int
+
         return jsonify({"status": "ok", "message": f"Блюдо выдано студенту {username}"})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -479,7 +484,10 @@ def api_mark_delivered():
 # === Выход ===
 @app.route('/logout')
 def logout():
-    session.pop('user_id', None)
+    try:
+        session.pop('user_id', None)
+    except Exception as e:
+        print(str(e))
     return redirect(url_for('first_page'))
 
 

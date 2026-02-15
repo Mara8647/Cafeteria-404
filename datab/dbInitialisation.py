@@ -66,6 +66,7 @@ def init_db():
             cook_id INTEGER NOT NULL,
             product_name TEXT NOT NULL,
             quantity REAL NOT NULL,
+            unit TEXT NOT NULL,
             status TEXT NOT NULL DEFAULT 'pending',
             created_at TEXT NOT NULL DEFAULT CURRENT_DATE,
             FOREIGN KEY(cook_id) REFERENCES users(id)

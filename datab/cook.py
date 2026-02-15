@@ -113,7 +113,7 @@ def check_inventory():
         return c.fetchall()
 
 
-def update_inventory(product, change):
+def update_inventory(product, change, unit):
     """Обновляет количество продукта на складе"""
     with sqlite3.connect('cafe.db') as conn:
         c = conn.cursor()
@@ -132,14 +132,14 @@ def update_inventory(product, change):
             return f"Остаток {product} обновлен: {new_quantity}"
         else:
             if change > 0:
-                c.execute("INSERT INTO inventory (product_name, quantity, unit) VALUES (?, ?, 'portion')",
-                          (product, change))
+                c.execute("INSERT INTO inventory (product_name, quantity, unit) VALUES (?, ?, ?)",
+                          (product, change, unit))
                 return f"Новый продукт {product} добавлен: {change}"
             else:
                 raise ValueError("Такого продукта нет, списывать нечего.")
 
 
-def create_purchase_request(cook_name, product, quantity):
+def create_purchase_request(cook_name, product, quantity, unit):
     """Создает заявку на закупку"""
     with sqlite3.connect('cafe.db') as conn:
         c = conn.cursor()
@@ -153,9 +153,9 @@ def create_purchase_request(cook_name, product, quantity):
         cook_id = res[0]
 
         c.execute("""
-            INSERT INTO purchase_requests (cook_id, product_name, quantity, status) 
-            VALUES (?, ?, ?, 'pending')
-        """, (cook_id, product, quantity))
+            INSERT INTO purchase_requests (cook_id, product_name, quantity, unit, status) 
+            VALUES (?, ?, ?, ?, 'pending')
+        """, (cook_id, product, quantity, unit))
 
         return f"Заявка на {product} ({quantity}) успешно создана и ждет одобрения админа."
 
@@ -180,34 +180,30 @@ def init_test_data():
     with sqlite3.connect('cafe.db') as conn:
         cursor = conn.cursor()
 
-        # Добавляем тестовое меню
-        cursor.execute("""
-            INSERT INTO menu (meal_type, name, price, allergies, date) 
-            VALUES('breakfast', 'Омлет', 150.0, 'eggs', ?)
-        """, (date.today(),))
+        meals = [('Омлет',), ('Суп',), ('Котлета с пюре',)]
+        check = cursor.execute("SELECT name FROM menu WHERE date = ?", (date.today(),)).fetchall()
 
-        cursor.execute("""
-            INSERT INTO menu (meal_type, name, price, allergies, date) 
-            VALUES('lunch', 'Суп', 200.0, 'нет', ?)
-        """, (date.today(),))
+        missing_meals = [meal for meal in meals if meal not in check]
+        if missing_meals:
+            print('test')
+            # Добавляем тестовое меню
+            cursor.execute("""
+                INSERT INTO menu (meal_type, name, price, allergies, date) 
+                VALUES('breakfast', 'Омлет', 150.0, 'eggs', ?)
+            """, (date.today(),))
 
-        cursor.execute("""
-            INSERT INTO menu (meal_type, name, price, allergies, date) 
-            VALUES('lunch', 'Котлета с пюре', 200.0, 'нет', ?)
-        """, (date.today(),))
+            cursor.execute("""
+                INSERT INTO menu (meal_type, name, price, allergies, date) 
+                VALUES('lunch', 'Суп', 200.0, 'нет', ?)
+            """, (date.today(),))
 
-        # Добавляем инвентарь
-        cursor.execute("""
-            INSERT INTO inventory (product_name, quantity, unit) 
-            VALUES ('Омлет', 10.0, 'порц.')
-        """)
+            cursor.execute("""
+                INSERT INTO menu (meal_type, name, price, allergies, date) 
+                VALUES('lunch', 'Котлета с пюре', 200.0, 'нет', ?)
+            """, (date.today(),))
 
-        cursor.execute("""
-            INSERT INTO inventory (product_name, quantity, unit) 
-            VALUES ('Суп', 10.0, 'порц.')
-        """)
-
-        cursor.execute("""
-            INSERT INTO inventory (product_name, quantity, unit) 
-            VALUES ('Котлета с пюре', 10.0, 'порц.')
-        """)
+            # Добавляем инвентарь
+            cursor.execute("""
+                INSERT INTO inventory (product_name, quantity, unit) 
+                VALUES ('Омлет', 10.0, 'порц.')
+            """)

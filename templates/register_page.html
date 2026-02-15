@@ -11,7 +11,9 @@
         <!-- Общие поля (имя, email и т.д.) -->
         <input type="text" name="name" placeholder="Например: Иван Иванович" class="form-control mb-2" required>
         <input type="email" name="email" placeholder="Например: exemple@gmail.com" class="form-control mb-2" required>
-        <input type="password" name="password" placeholder="Например: 123_Abc456" class="form-control mb-2" required>
+        <input type="password" pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&_])[A-Za-z\d@$!%*_?&]{8,}$" name="password" placeholder="Например: 123_Abc456" class="form-control mb-2" required>
+        <div class="form-text">Должен содержать: от 8 символов, заглавную и строчную буквы, цифру и спецсимвол</div>
+
 
         <!-- Поле аллергенов -->
         <div id="allergensField" class="mb-3">
@@ -21,7 +23,6 @@
         </div>
 
         <button type="submit" class="btn btn-success">Зарегистрироваться</button>
-        <button type="button" id="backButton" class="btn btn-secondary ms-2">Назад</button>
     </div>
 </form>
 
@@ -77,24 +78,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // ВЫЗЫВАЕМ ФУНКЦИЮ ПРИ ЗАГРУЗКЕ!
     initAllergenButtons();
-
-    // Обработчик кнопки "Назад"
-    if (backButton) {
-        backButton.addEventListener('click', function() {
-            const step1Div = document.getElementById('step1');
-            if (step1Div) {
-                step1Div.style.display = 'block';
-                commonFieldsDiv.style.display = 'none';
-                allergensInput.value = 'none';
-
-                // Сбросить все кнопки аллергенов
-                document.querySelectorAll('#allergyCheckboxes .btn').forEach(btn => {
-                    btn.classList.remove('btn-primary');
-                    btn.classList.add('btn-outline-secondary');
-                });
-            }
-        });
-    }
 });
 </script>
 

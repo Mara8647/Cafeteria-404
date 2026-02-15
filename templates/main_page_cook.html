@@ -214,6 +214,18 @@
                             <label for="quantityChange" class="form-label">Изменение количества (положительное — добавить, отрицательное — списать)</label>
                             <input type="number" class="form-control" id="quantityChange" placeholder="Например: -1" required>
                         </div>
+                        <!-- ДОБАВЛЕНО -->
+                        <div class="mb-3">
+                            <label for="inventoryUnit" class="form-label">Единица измерения</label>
+                            <select class="form-select" id="inventoryUnit" required>
+                                <option value="кг">кг</option>
+                                <option value="г">г</option>
+                                <option value="л">л</option>
+                                <option value="мл">мл</option>
+                                <option value="порц.">порц.</option>
+                                <option value="упак.">упак.</option>
+                            </select>
+                        </div>
                         <button type="submit" class="btn btn-success">Обновить</button>
                     </form>
                 </div>
@@ -231,6 +243,17 @@
                         <div class="mb-3">
                             <label for="requestQuantity" class="form-label">Количество</label>
                             <input type="number" class="form-control" id="requestQuantity" placeholder="Например: 10" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="purchaseUnit" class="form-label">Единица измерения</label>
+                            <select class="form-select" id="purchaseUnit" required>
+                                <option value="кг">кг</option>
+                                <option value="г">г</option>
+                                <option value="л">л</option>
+                                <option value="мл">мл</option>
+                                <option value="порц.">порц.</option>
+                                <option value="упак.">упак.</option>
+                            </select>
                         </div>
                         <button type="submit" class="btn btn-success">Создать заявку</button>
                     </form>
@@ -373,6 +396,8 @@
             e.preventDefault();
             const product = document.getElementById('productName').value;
             const change = parseInt(document.getElementById('quantityChange').value);
+            // ДОБАВЛЕНО
+            const unit = document.getElementById('inventoryUnit').value;
 
             if (isNaN(change)) {
                 alert('Введите корректное число');
@@ -383,7 +408,8 @@
                 const response = await fetch('/api/cook/update_inventory', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ product, change })
+                    // ДОБАВЛЕНО: unit
+                    body: JSON.stringify({ product, change, unit })
                 });
 
                 if (response.ok) {
@@ -404,6 +430,8 @@
             e.preventDefault();
             const product = document.getElementById('requestProduct').value;
             const quantity = parseInt(document.getElementById('requestQuantity').value);
+            // ДОБАВЛЕНО
+            const unit = document.getElementById('purchaseUnit').value;
 
             if (isNaN(quantity) || quantity <= 0) {
                 alert('Введите корректное количество');
@@ -414,7 +442,8 @@
                 const response = await fetch('/api/cook/create_purchase_request', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ product, quantity })
+                    // ДОБАВЛЕНО: unit
+                    body: JSON.stringify({ product, quantity, unit })
                 });
 
                 if (response.ok) {
